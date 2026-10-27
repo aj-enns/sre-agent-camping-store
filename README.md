@@ -94,9 +94,11 @@ Replace `YOUR_API_HOST` with the API hostname from the website deployment summar
 ```bash
 # macOS/Linux
 bash scripts/break-app.sh https://YOUR_API_HOST
+```
 
-# Windows
-"C:\Program Files\Git\bin\bash.exe" scripts/break-app.sh https://YOUR_API_HOST
+```powershell
+# Windows PowerShell
+& "C:\Program Files\Git\bin\bash.exe" scripts/break-app.sh https://YOUR_API_HOST
 ```
 
 1. Open the Camping Store frontend — try adding to cart (it's broken!)
@@ -126,10 +128,12 @@ Same break as Scenario 1, but the agent also:
 
 ```bash
 # Create sample customer issues (uses gh CLI, no PAT needed)
-bash scripts/create-sample-issues.sh <your-organization>/sre-agent-camping-store
+bash scripts/create-sample-issues.sh YOUR_GITHUB_OWNER/sre-agent-camping-store
+```
 
-# Or Windows:
-"C:\Program Files\Git\bin\bash.exe" scripts/create-sample-issues.sh <your-organization>/sre-agent-camping-store
+```powershell
+# Windows PowerShell
+& "C:\Program Files\Git\bin\bash.exe" scripts/create-sample-issues.sh YOUR_GITHUB_OWNER/sre-agent-camping-store
 ```
 
 1. Go to **Builder → Scheduled tasks** → **triage-camping-issues** → **Run task now**

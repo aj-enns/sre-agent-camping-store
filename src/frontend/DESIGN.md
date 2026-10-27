@@ -14,6 +14,8 @@ The storefront is a photo-led camping-gear catalog with the visual language of a
 - The shop opens with a dark header, category rail, wide campsite feature, and searchable three-column catalog.
 - At widths up to 1,050px, reduce the catalog to two columns; at 720px, convert the category rail to a horizontal scroller and stack checkout content; at 390px, use one catalog column.
 - Keep category filtering, search, cart quantity controls, demo checkout, and order history functional and API-backed.
+- Catalog cards open shareable product pages at `#/products/ID`. Product pages pair a large illustrative photo with the API's description, price, availability, and a stock-bounded quantity selector; Add to cart uses the existing API.
+- Product pages use a two-column photo/purchase layout, stacking at 720px. Preserve catalog filters when returning, support browser Back/Forward, and show loading, retry, and item-not-found states.
 - Provide visible keyboard focus, clear disabled states, and reduced-motion behavior. Preserve readable contrast across dark panels and white surfaces.
 
 ## Content guardrails
