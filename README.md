@@ -219,6 +219,7 @@ azd down --purge
 
 | Issue | Fix |
 |-------|-----|
+| Bash reports `$'\r': command not found` or `invalid option name` | The script has Windows CRLF line endings. Save it with LF line endings and rerun. `.gitattributes` keeps shell scripts in LF format on future checkouts. |
 | Python not found (Windows) | Disable Store aliases, reopen CMD |
 | Agent configuration fails after infrastructure deployment | Run `bash scripts/post-provision.sh --retry`; the script exits nonzero and identifies any missing component. |
 | GitHub was skipped or is not connected | Fork `aj-enns/sre-agent-camping-store`, then run `bash scripts/setup-github.sh <your-github-username>`. |
