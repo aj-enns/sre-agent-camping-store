@@ -12,10 +12,10 @@ Trailhead Outfitters is a camping supply retail web store (tents, sleeping bags,
 |-----------|---------------|---------|
 | **API** | Azure Container Apps (`ca-camping-*`) | ASP.NET Core (.NET 9), external ingress |
 | **Frontend** | Azure Container Apps (`ca-camping-fe-*`) | React + nginx, calls the API |
-| **Container Registry** | Azure Container Registry | Images `camping-api` and `camping-frontend`, built by `post-provision.sh` |
-| **Container Environment** | Container Apps Environment | Linked to Log Analytics |
-| **Logs** | Log Analytics Workspace | Console logs via `ContainerAppConsoleLogs_CL` |
-| **Telemetry** | Application Insights | Request metrics, exceptions, dependencies |
+| **Container Registry** | Azure Container Registry (Basic) | Public endpoint; images require authentication; admin and anonymous access disabled |
+| **Container Environment** | Container Apps Environment | No custom VNet; diagnostic settings route logs to Log Analytics |
+| **Logs** | Log Analytics Workspace | Console logs via `ContainerAppConsoleLogs`; no shared workspace keys |
+| **Telemetry** | Application Insights | Request metrics, exceptions, dependencies; Entra-authenticated ingestion |
 | **Identity** | User-Assigned Managed Identity | Reader + Monitoring Reader + Log Analytics Reader |
 | **Alerts** | Azure Monitor | Metric alert for HTTP 5xx |
 
@@ -51,7 +51,7 @@ Each `POST /api/cart/{userId}/items` call causes `RequestAnalyticsCache` (a sing
 - OOM kill, container restart, HTTP 5xx errors
 - Azure Monitor alert `alert-http-5xx-sre-lab` fires
 
-**Trigger:** `bash scripts/break-app.sh`, or:
+**Trigger:** `bash scripts/break-app.sh https://<app-url>`, or:
 ```bash
 while true; do
   curl -X POST "https://<app-url>/api/cart/demo-user/items" \
@@ -71,7 +71,7 @@ Building the API with `API_VERSION=v2` makes `PaymentGateway` fail, so `POST /ap
 
 - **GitHub repository:** [github.com/aj-enns/sre-agent-camping-store](https://github.com/aj-enns/sre-agent-camping-store)
 - **Language:** C# (.NET 9) API, TypeScript/React frontend
-- **Images:** built in ACR as `camping-api:latest` and `camping-frontend:latest`
+- **Images:** built locally by `azd` or on a standard GitHub-hosted runner and pushed to authenticated ACR; Container Apps pulls them using managed identity. No storage account or shared keys are used.
 
 ### Key Files
 
@@ -104,18 +104,18 @@ Building the API with `API_VERSION=v2` makes `PaymentGateway` fail, so `POST /ap
 
 **Error logs:**
 ```kql
-ContainerAppConsoleLogs_CL
+ContainerAppConsoleLogs
 | where TimeGenerated > ago(1h)
-| where Log_s contains "error" or Log_s contains "Error" or Log_s contains "500"
+| where Log contains "error" or Log contains "Error" or Log contains "500"
 | summarize ErrorCount = count() by bin(TimeGenerated, 5m)
 | order by TimeGenerated desc
 ```
 
 **Container app console output:**
 ```kql
-ContainerAppConsoleLogs_CL
+ContainerAppConsoleLogs
 | where TimeGenerated > ago(1h)
-| project TimeGenerated, Log_s, ContainerName_s
+| project TimeGenerated, Log, ContainerName
 | order by TimeGenerated desc
 | take 50
 ```
@@ -145,7 +145,7 @@ These alerts flow automatically to the SRE Agent via the managed resource group 
 ## Troubleshooting Quick Reference
 
 1. **Check health:** `curl https://<app-url>/health`
-2. **Check logs:** Query `ContainerAppConsoleLogs_CL` in Log Analytics
+2. **Check logs:** Query `ContainerAppConsoleLogs` in Log Analytics
 3. **Check metrics:** Azure Monitor → Container App → Requests, CPU, Memory
 4. **Restart:** `az containerapp revision restart -g <rg> -n <app> --revision <rev>`
 5. **Scale out:** `az containerapp update -g <rg> -n <app> --min-replicas 3`

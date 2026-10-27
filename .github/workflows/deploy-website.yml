@@ -1,0 +1,52 @@
+name: Deploy website
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - src/**
+      - scripts/deploy-website.sh
+      - scripts/deployment-common.sh
+      - .github/workflows/deploy-website.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: camping-store-lab
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: lab
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || 'rg-sre-agent-camping-store' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check configuration
+        shell: bash
+        env:
+          AZURE_CLIENT_ID: ${{ vars.WEBSITE_AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+        run: |
+          source scripts/deployment-common.sh
+          require_env AZURE_SUBSCRIPTION_ID AZURE_CLIENT_ID AZURE_TENANT_ID
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.WEBSITE_AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Set up Container Apps CLI
+        run: az extension add --name containerapp --upgrade --yes --only-show-errors
+      - name: Build and deploy website
+        run: bash scripts/deploy-website.sh

@@ -1,5 +1,4 @@
-# Azure Developer CLI (azd) template for SRE Agent Lab
-# Run: azd up
+# yaml-language-server: $schema=https://aka.ms/azure.yaml.json
 name: sre-agent-camping-store
 metadata:
   template: sre-agent-camping-store@1.0.0
@@ -8,11 +7,37 @@ infra:
   provider: bicep
   path: infra
 
-# No services block — container image is built in the cloud via ACR Tasks
-# in the post-provision hook. No Docker Desktop needed on the lab machine.
+services:
+  api:
+    project: ./src/api
+    host: containerapp
+    language: docker
+    docker:
+      path: Dockerfile
+      context: .
+      buildArgs:
+        - NUGET_SOURCE=${NUGET_SOURCE:-https://api.nuget.org/v3/index.json}
+    env:
+      API_VERSION: v1
+      AllowedOrigins__0: ${FRONTEND_APP_URL}
+  frontend:
+    project: ./src/frontend
+    host: containerapp
+    language: docker
+    docker:
+      path: Dockerfile
+      context: .
+    env:
+      REACT_APP_API_BASE_URL: ${CONTAINER_APP_URL}/api
 
 hooks:
-  postprovision:
-    shell: sh
-    run: bash scripts/post-provision.sh
-    interactive: true
+  preprovision:
+    posix:
+      shell: sh
+      run: bash scripts/azd-preprovision.sh
+    windows:
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        & "$env:ProgramFiles\Git\bin\bash.exe" scripts/azd-preprovision.sh
+        exit $LASTEXITCODE

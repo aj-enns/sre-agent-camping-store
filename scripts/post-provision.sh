@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# post-provision.sh — Runs automatically after azd provision
+# post-provision.sh — Interactive SRE Agent setup after azd up (--skip-build)
 #
 # Configures the SRE Agent using dataplane REST APIs (no srectl dependency):
 #   - Uploads knowledge sources

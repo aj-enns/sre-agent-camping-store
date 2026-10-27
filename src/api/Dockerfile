@@ -1,8 +1,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /app
 
+ARG NUGET_SOURCE=https://api.nuget.org/v3/index.json
 COPY *.csproj ./
-RUN dotnet restore
+RUN dotnet restore --source "$NUGET_SOURCE"
 
 COPY . ./
 RUN dotnet publish -c Release -o out --no-restore

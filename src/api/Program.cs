@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
+using Azure.Identity;
 using CampingApi.Services;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,6 +33,13 @@ builder.Services.AddSingleton<IOrderService, InMemoryOrderService>();
 if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
 {
     builder.Services.AddApplicationInsightsTelemetry();
+    builder.Services.Configure<TelemetryConfiguration>(configuration =>
+    {
+        var clientId = builder.Configuration["AZURE_CLIENT_ID"];
+        configuration.SetAzureTokenCredential(string.IsNullOrWhiteSpace(clientId)
+            ? new DefaultAzureCredential()
+            : new ManagedIdentityCredential(ManagedIdentityId.FromUserAssignedClientId(clientId)));
+    });
 }
 
 // AllowedOrigins__0, AllowedOrigins__1, ... come from container app env vars.

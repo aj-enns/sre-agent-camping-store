@@ -72,14 +72,14 @@ az monitor metrics list --resource "/subscriptions/cbf44432-7f45-4906-a85d-d2b14
 
 ### 1.5 Memory Pressure Indicators
 ```kql
-ContainerAppConsoleLogs_CL
+ContainerAppConsoleLogs
 | where TimeGenerated > ago(1h)
-| where Log_s contains "OutOfMemory" 
-    or Log_s contains "OOM" 
-    or Log_s contains "memory pressure"
-    or Log_s contains "GC"
-    or Log_s contains "heap"
-| project TimeGenerated, Log_s, ContainerName_s
+| where Log contains "OutOfMemory"
+    or Log contains "OOM"
+    or Log contains "memory pressure"
+    or Log contains "GC"
+    or Log contains "heap"
+| project TimeGenerated, Log, ContainerName
 | order by TimeGenerated desc
 ```
 
@@ -132,9 +132,9 @@ az containerapp logs show -g rg-octopets-nov9 -n octopetsapi --subscription cbf4
 
 ### 2.3 Quick Error Count (KQL)
 ```kql
-ContainerAppConsoleLogs_CL
+ContainerAppConsoleLogs
 | where TimeGenerated > ago(1h)
-| where Log_s contains "error" or Log_s contains "exception" or Log_s contains "500"
+| where Log contains "error" or Log contains "exception" or Log contains "500"
 | summarize ErrorCount = count() by bin(TimeGenerated, 5m)
 | order by TimeGenerated desc
 ```
@@ -145,10 +145,10 @@ ContainerAppConsoleLogs_CL
 
 ### 3.1 Top Errors by Message
 ```kql
-ContainerAppConsoleLogs_CL
+ContainerAppConsoleLogs
 | where TimeGenerated > ago(1h)
-| where Log_s contains "error" or Log_s contains "exception"
-| extend ErrorMessage = extract("(Exception|Error|Failed|Fault).*", 0, Log_s)
+| where Log contains "error" or Log contains "exception"
+| extend ErrorMessage = extract("(Exception|Error|Failed|Fault).*", 0, Log)
 | summarize Count = count(), 
     FirstSeen = min(TimeGenerated), 
     LastSeen = max(TimeGenerated)
@@ -267,19 +267,19 @@ by target, name
 
 ### 6.1 Container Restarts/Crashes
 ```kql
-ContainerAppSystemLogs_CL
+ContainerAppSystemLogs
 | where TimeGenerated > ago(1h)
-| where Log_s contains "restart" or Log_s contains "crash" or Log_s contains "OOMKilled"
-| project TimeGenerated, Log_s, ContainerName_s, RevisionName_s
+| where Log contains "restart" or Log contains "crash" or Log contains "OOMKilled"
+| project TimeGenerated, Log, ContainerName, RevisionName
 | order by TimeGenerated desc
 ```
 
 ### 6.2 Resource Exhaustion (OOM)
 ```kql
-ContainerAppConsoleLogs_CL
+ContainerAppConsoleLogs
 | where TimeGenerated > ago(1h)
-| where Log_s contains "OutOfMemory" or Log_s contains "OOM" or Log_s contains "memory"
-| project TimeGenerated, Log_s, ContainerName_s
+| where Log contains "OutOfMemory" or Log contains "OOM" or Log contains "memory"
+| project TimeGenerated, Log, ContainerName
 | order by TimeGenerated desc
 ```
 
@@ -294,19 +294,19 @@ az containerapp env show --ids <resourceId> --subscription <subId>
 
 ### 7.1 Recent Deployments
 ```kql
-ContainerAppSystemLogs_CL
+ContainerAppSystemLogs
 | where TimeGenerated > ago(24h)
-| where Log_s contains "revision" or Log_s contains "deploy"
-| project TimeGenerated, Log_s, RevisionName_s
+| where Log contains "revision" or Log contains "deploy"
+| project TimeGenerated, Log, RevisionName
 | order by TimeGenerated desc
 ```
 
 ### 7.2 Errors After Deployment (Timeline)
 ```kql
 let deployTime = datetime(2025-12-19T10:00:00Z);  // Replace with actual deploy time
-ContainerAppConsoleLogs_CL
+ContainerAppConsoleLogs
 | where TimeGenerated between (deployTime .. (deployTime + 2h))
-| where Log_s contains "error" or Log_s contains "exception"
+| where Log contains "error" or Log contains "exception"
 | summarize ErrorCount = count() by bin(TimeGenerated, 5m)
 | order by TimeGenerated asc
 ```

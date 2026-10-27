@@ -6,12 +6,25 @@ param environmentName string
 @description('Primary location for all resources')
 param location string = 'eastus2'
 
-// Resource group
-var resourceGroupName = 'rg-${environmentName}'
+param resourceGroupName string = 'rg-${environmentName}'
+
+param apiImage string = 'mcr.microsoft.com/dotnet/samples:aspnetapp'
+param frontendImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+param frontendOrigin string = ''
+param websitePrincipalId string = ''
+
+@allowed([
+  'User'
+  'ServicePrincipal'
+])
+param deployerPrincipalType string = 'User'
 
 resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
   name: resourceGroupName
   location: location
+  tags: {
+    'azd-env-name': environmentName
+  }
 }
 
 // Deploy all resources into the resource group
@@ -21,6 +34,11 @@ module resources 'resources.bicep' = {
   params: {
     environmentName: environmentName
     location: location
+    apiImage: apiImage
+    frontendImage: frontendImage
+    frontendOrigin: frontendOrigin
+    websitePrincipalId: websitePrincipalId
+    deployerPrincipalType: deployerPrincipalType
   }
 }
 

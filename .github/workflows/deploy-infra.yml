@@ -1,0 +1,58 @@
+name: Deploy infrastructure
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - infra/**
+      - scripts/deploy-infra.sh
+      - scripts/deployment-common.sh
+      - tests/deployment.tests.sh
+      - tests/infrastructure.tests.py
+      - .github/workflows/deploy-infra.yml
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: camping-store-lab
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: lab
+    timeout-minutes: 45
+    env:
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || 'rg-sre-agent-camping-store' }}
+      AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME || 'sre-agent-camping-store' }}
+      AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus2' }}
+      WEBSITE_PRINCIPAL_ID: ${{ vars.WEBSITE_PRINCIPAL_ID }}
+      AZURE_CLIENT_ID: ${{ vars.INFRA_AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check configuration
+        shell: bash
+        run: |
+          source scripts/deployment-common.sh
+          require_env AZURE_SUBSCRIPTION_ID AZURE_CLIENT_ID AZURE_TENANT_ID WEBSITE_PRINCIPAL_ID
+      - name: Check deployment scripts
+        run: bash tests/deployment.tests.sh
+      - name: Check infrastructure
+        run: az bicep build --file infra/main.bicep --stdout | python3 tests/infrastructure.tests.py
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.INFRA_AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Set up Container Apps CLI
+        run: az extension add --name containerapp --upgrade --yes --only-show-errors
+      - name: Deploy infrastructure
+        run: bash scripts/deploy-infra.sh
