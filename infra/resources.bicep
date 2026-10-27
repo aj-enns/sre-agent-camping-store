@@ -4,6 +4,12 @@ param environmentName string
 @description('Location for all resources')
 param location string
 
+param apiImage string
+param frontendImage string
+param frontendOrigin string
+param websitePrincipalId string
+param deployerPrincipalType string
+
 // ============================================================
 // Variables
 // ============================================================
@@ -48,8 +54,12 @@ module containerApp 'modules/container-app.bicep' = {
     containerAppEnvName: containerAppEnvName
     containerAppName: containerAppName
     logAnalyticsWorkspaceId: monitoring.outputs.logAnalyticsWorkspaceId
-    logAnalyticsWorkspaceKey: monitoring.outputs.logAnalyticsWorkspaceKey
     appInsightsConnectionString: monitoring.outputs.appInsightsConnectionString
+    appInsightsId: monitoring.outputs.appInsightsId
+    apiImage: apiImage
+    frontendImage: frontendImage
+    frontendOrigin: frontendOrigin
+    websitePrincipalId: websitePrincipalId
   }
 }
 
@@ -67,6 +77,7 @@ module sreAgent 'modules/sre-agent.bicep' = {
     appInsightsConnectionString: monitoring.outputs.appInsightsConnectionString
     appInsightsId: monitoring.outputs.appInsightsId
     managedResourceGroupId: resourceGroup().id
+    deployerPrincipalType: deployerPrincipalType
   }
 }
 

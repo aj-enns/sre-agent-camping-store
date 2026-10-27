@@ -22,6 +22,7 @@ param appInsightsId string
 
 @description('Resource Group ID to add as managed resource')
 param managedResourceGroupId string
+param deployerPrincipalType string = 'User'
 
 // SRE Agent Administrator role ID
 var sreAgentAdminRoleId = 'e79298df-d852-4c6d-84f9-5d13249d1e55'
@@ -70,9 +71,26 @@ resource sreAgentAdminRoleAssignment 'Microsoft.Authorization/roleAssignments@20
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', sreAgentAdminRoleId)
     principalId: deployer().objectId
-    principalType: 'User'
+    principalType: deployerPrincipalType
   }
 }
+
+resource telemetry 'Microsoft.Insights/components@2020-02-02' existing = {
+  name: last(split(appInsightsId, '/'))
+}
+
+resource agentTelemetryRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for identityType in [
+  'system'
+  'user'
+]: {
+  name: guid(telemetry.id, sreAgent.id, identityId, identityType, 'agent-telemetry')
+  scope: telemetry
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb')
+    principalId: identityType == 'system' ? sreAgent.identity.principalId : identityPrincipalId
+    principalType: 'ServicePrincipal'
+  }
+}]
 
 // Outputs
 output agentName string = sreAgent.name

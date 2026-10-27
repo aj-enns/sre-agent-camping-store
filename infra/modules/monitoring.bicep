@@ -16,6 +16,9 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09
       name: 'PerGB2018'
     }
     retentionInDays: 30
+    features: {
+      disableLocalAuth: true
+    }
   }
 }
 
@@ -28,13 +31,13 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
     Application_Type: 'web'
     Request_Source: 'IbizaAIExtension'
     WorkspaceResourceId: logAnalyticsWorkspace.id
+    DisableLocalAuth: true
   }
 }
 
 // Outputs
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspace.id
 output logAnalyticsWorkspaceName string = logAnalyticsWorkspace.name
-output logAnalyticsWorkspaceKey string = logAnalyticsWorkspace.listKeys().primarySharedKey
 output appInsightsId string = applicationInsights.id
 output appInsightsAppId string = applicationInsights.properties.AppId
 output appInsightsConnectionString string = applicationInsights.properties.ConnectionString

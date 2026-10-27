@@ -12,7 +12,7 @@ Deploy an Azure SRE Agent, break a sample app, and watch it diagnose and fix the
 
 | Resource | Purpose |
 |----------|---------|
-| **SRE Agent** | AI agent with managed identity, knowledge base, custom agents |
+| **SRE Agent** | AI agent with managed identity; configure knowledge base and custom agents separately |
 | **Camping Store App** | Sample camping supply store (Trailhead Outfitters) (API + Frontend on Container Apps) |
 | **Log Analytics + App Insights** | Monitoring and log storage |
 | **Azure Monitor Alert** | HTTP 5xx alert → auto-triggers agent investigation |
@@ -20,6 +20,8 @@ Deploy an Azure SRE Agent, break a sample app, and watch it diagnose and fix the
 | **Managed Identity** | Reader + Monitoring Reader + Log Analytics Reader RBAC |
 
 ### SRE Agent Configuration
+
+Configure these components in the portal after deployment; the workflows provision the agent resource only.
 
 | Component | Purpose |
 |-----------|---------|
@@ -45,7 +47,7 @@ Deploy an Azure SRE Agent, break a sample app, and watch it diagnose and fix the
 | Tool | macOS | Windows |
 |------|-------|---------|
 | [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) 2.60+ | `brew install azure-cli` | `winget install Microsoft.AzureCLI` |
-| [Azure Developer CLI](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd) 1.9+ | `brew install azd` | `winget install Microsoft.Azd` |
+| [GitHub CLI](https://cli.github.com/) | `brew install gh` | `winget install GitHub.cli` |
 | [Git](https://git-scm.com/) 2.x | `brew install git` | `winget install Git.Git` |
 | [Python](https://python.org) 3.10+ | `brew install python3` | `winget install Python.Python.3.12` |
 
@@ -56,55 +58,23 @@ Deploy an Azure SRE Agent, break a sample app, and watch it diagnose and fix the
 - Active Azure subscription with **Owner** role
 - Register: `az provider register -n Microsoft.App --wait`
 
-### Optional
+### GitHub
 
-- [GitHub account](https://github.com) — fork [aj-enns/sre-agent-camping-store](https://github.com/aj-enns/sre-agent-camping-store/fork) for Scenarios 2 & 3
+- A personal or organization repository works with standard GitHub-hosted runners.
+- The SRE Agent's GitHub connection is optional; Scenarios 2 & 3 require it.
 
 ## Quick Start
 
-### One-Command Setup (Recommended)
+Clone this repository:
 
-The `setup.sh` script handles prerequisites, login, and deployment. The `azd` post-provision hook configures the agent and fails the deployment if required agent components are missing.
-
-**macOS / Linux:**
 ```bash
 git clone https://github.com/aj-enns/sre-agent-camping-store.git
 cd sre-agent-camping-store
-bash scripts/setup.sh
 ```
 
-**Windows:**
-```cmd
-git clone https://github.com/aj-enns/sre-agent-camping-store.git
-cd sre-agent-camping-store
-"C:\Program Files\Git\bin\bash.exe" scripts/setup.sh
-```
-
-The script will:
-1. Check prerequisites
-2. Reuse existing Azure CLI and Azure Developer CLI sessions, or open browser sign-in when needed
-3. Select the requested Azure subscription
-4. Register resource providers
-5. Ask for GitHub username (optional)
-6. Deploy infrastructure (~5-8 min)
-7. Configure the SRE Agent
-
-### Manual Setup
-
-If you prefer to run each step yourself:
-
-```bash
-az login
-azd auth login
-az provider register -n Microsoft.App --wait
-
-azd env new sre-lab
-azd env set AZURE_LOCATION eastus2
-# Optional: azd env set GITHUB_USER <your-username>
-azd up
-```
-
-If browser sign-in is unavailable, run `az login --use-device-code` and `azd auth login --use-device-code` manually before `azd up`.
+Follow **[Deployment](docs/deployment.md)**: use `azd up` locally, or run
+**Deploy infrastructure**, then **Deploy website** in GitHub Actions.
+Images require authentication; no storage account, shared keys, or private network is needed.
 
 ## Verify Setup
 
@@ -114,22 +84,19 @@ Open [sre.azure.com](https://sre.azure.com) → Full Setup → verify:
 - **Azure resources**: 1 resource group
 - **Knowledge sources**: runbook files indexed
 
-If you skipped GitHub during setup, fork the sre-agent-camping-store repository and add it later:
-
-```bash
-bash scripts/setup-github.sh <your-github-username>
-```
+For Scenarios 2 & 3, authorize GitHub in the agent portal and add your organization-owned repository.
 
 ## Scenario 1: IT Operations (No GitHub)
 
 Break the app and ask the agent to investigate using logs and knowledge base.
+Replace `YOUR_API_HOST` with the API hostname from the website deployment summary.
 
 ```bash
 # macOS/Linux
-bash scripts/break-app.sh
+bash scripts/break-app.sh https://YOUR_API_HOST
 
 # Windows
-"C:\Program Files\Git\bin\bash.exe" scripts/break-app.sh
+"C:\Program Files\Git\bin\bash.exe" scripts/break-app.sh https://YOUR_API_HOST
 ```
 
 1. Open the Camping Store frontend — try adding to cart (it's broken!)
@@ -159,14 +126,14 @@ Same break as Scenario 1, but the agent also:
 
 ```bash
 # Create sample customer issues (uses gh CLI, no PAT needed)
-bash scripts/create-sample-issues.sh <your-user>/sre-agent-camping-store
+bash scripts/create-sample-issues.sh <your-organization>/sre-agent-camping-store
 
 # Or Windows:
-"C:\Program Files\Git\bin\bash.exe" scripts/create-sample-issues.sh <your-user>/sre-agent-camping-store
+"C:\Program Files\Git\bin\bash.exe" scripts/create-sample-issues.sh <your-organization>/sre-agent-camping-store
 ```
 
 1. Go to **Builder → Scheduled tasks** → **triage-camping-issues** → **Run task now**
-2. Check `github.com/<your-user>/sre-agent-camping-store/issues` — each `[Customer Issue]` gets:
+2. Check `github.com/<your-organization>/sre-agent-camping-store/issues` — each `[Customer Issue]` gets:
    - Classification: Bug, Performance, Feature Request, Question
    - Labels: `bug`, `api-bug`, `severity-high`, etc.
    - Triage comment from the agent
@@ -211,9 +178,9 @@ Then later ask: `Who is on call today?`
 
 ## Cleanup
 
-```bash
-azd down --purge
-```
+Delete `rg-sre-agent-camping-store` in the Azure portal. This removes the website, agent, registry, and monitoring.
+Also remove the SRE managed identity's subscription-level role assignments.
+Remove the CI identities and their role assignments when no longer needed.
 
 ## Troubleshooting
 
@@ -221,8 +188,8 @@ azd down --purge
 |-------|-----|
 | Bash reports `$'\r': command not found` or `invalid option name` | The script has Windows CRLF line endings. Save it with LF line endings and rerun. `.gitattributes` keeps shell scripts in LF format on future checkouts. |
 | Python not found (Windows) | Disable Store aliases, reopen CMD |
-| Agent configuration fails after infrastructure deployment | Run `bash scripts/post-provision.sh --retry`; the script exits nonzero and identifies any missing component. |
-| GitHub was skipped or is not connected | Fork `aj-enns/sre-agent-camping-store`, then run `bash scripts/setup-github.sh <your-github-username>`. |
+| Agent has no runbooks or custom agents | Configure `knowledge-base/` and `sre-config/` in the SRE Agent portal after deployment. |
+| GitHub is not connected | Authorize GitHub in the agent portal and add your organization-owned repository. |
 | GitHub issue creation fails | Nudge: "Use the GitHub API to create the issue" |
 | `az login` uses wrong account | Run `az logout`, sign in again, and rerun setup. Use `az login --use-device-code` only when browser sign-in is unavailable. |
 

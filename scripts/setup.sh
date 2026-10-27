@@ -29,7 +29,7 @@ echo ""
 echo -e "${YELLOW}[1/6] Checking prerequisites...${NC}"
 
 MISSING=0
-for cmd in az azd git; do
+for cmd in az azd git docker jq; do
   if command -v $cmd &>/dev/null; then
     echo -e "  ${GREEN}✓${NC} $cmd"
   else
@@ -120,6 +120,11 @@ echo -e "${YELLOW}[3/6] Setting up environment...${NC}"
 ENV_NAME="${2:-sre-lab}"
 azd env new "$ENV_NAME" 2>/dev/null || azd env select "$ENV_NAME" 2>/dev/null
 azd env set AZURE_LOCATION eastus2 2>/dev/null
+SUB_ID=$(az account show --query id --output tsv | tr -d '\r')
+if ! azd env set AZURE_SUBSCRIPTION_ID "$SUB_ID"; then
+  echo -e "${RED}  Could not save the selected subscription.${NC}"
+  exit 1
+fi
 echo -e "  ${GREEN}✓${NC} Environment: $ENV_NAME (eastus2)"
 
 # GitHub (optional)
@@ -148,8 +153,12 @@ if [ $? -ne 0 ]; then
 fi
 echo ""
 
-# ── Step 5: Confirm post-provision hook ─────────────────────────────────────
-echo -e "${YELLOW}[5/6] SRE Agent configuration completed by the azd post-provision hook.${NC}"
+# ── Step 5: Configure SRE Agent ────────────────────────────────────────────
+echo -e "${YELLOW}[5/6] Configuring SRE Agent (interactive)...${NC}"
+if ! bash scripts/post-provision.sh --skip-build; then
+  echo -e "${RED}  Agent configuration failed. Retry: bash scripts/post-provision.sh --skip-build${NC}"
+  exit 1
+fi
 echo ""
 
 # ── Step 6: Summary ──────────────────────────────────────────────────────────
