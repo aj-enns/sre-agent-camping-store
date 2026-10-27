@@ -14,7 +14,7 @@ fi
 
 if [ -z "$GITHUB_USER" ]; then
   echo "Usage: bash scripts/setup-github.sh <github-username>"
-  echo "Fork https://github.com/aj-enns/sre-agent-camping-demo before running this command."
+  echo "Fork https://github.com/aj-enns/sre-agent-camping-store before running this command."
   exit 1
 fi
 

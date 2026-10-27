@@ -80,7 +80,7 @@ case "$method $url" in
   'GET https://agent.test/api/v2/github/domains')
     if [[ -n "${TEST_GITHUB_USER:-}" ]]; then response='{"values":[{"name":"github_com"}]}'; else response='{"values":[]}'; fi ;;
   'GET https://agent.test/api/v2/repos')
-    if [[ -n "${TEST_GITHUB_USER:-}" ]]; then response='{"value":[{"name":"sre-agent-camping-demo"}]}'; else response='{"value":[]}'; fi ;;
+    if [[ -n "${TEST_GITHUB_USER:-}" ]]; then response='{"value":[{"name":"sre-agent-camping-store"}]}'; else response='{"value":[]}'; fi ;;
   'GET https://agent.test/api/v2/extendedAgent/incidentFilters')
     response='{"value":[{"name":"camping-http-errors","properties":{"handlingAgent":"incident-handler"}}]}' ;;
   'GET https://agent.test/api/v2/extendedAgent/scheduledtasks')
@@ -107,7 +107,7 @@ run_scenario() {
 
 run_scenario ''
 run_scenario 'octocat'
-grep -q 'PUT https://agent.test/api/v2/repos/sre-agent-camping-demo' "$TMP_DIR/calls-octocat.log"
+grep -q 'PUT https://agent.test/api/v2/repos/sre-agent-camping-store' "$TMP_DIR/calls-octocat.log"
 grep -q 'PUT https://agent.test/api/v2/extendedAgent/scheduledtasks/triage-camping-issues' "$TMP_DIR/calls-octocat.log"
 
 export TEST_GITHUB_USER=''

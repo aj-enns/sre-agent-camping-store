@@ -58,7 +58,7 @@ Deploy an Azure SRE Agent, break a sample app, and watch it diagnose and fix the
 
 ### Optional
 
-- [GitHub account](https://github.com) — fork [aj-enns/sre-agent-camping-demo](https://github.com/aj-enns/sre-agent-camping-demo/fork) for Scenarios 2 & 3
+- [GitHub account](https://github.com) — fork [aj-enns/sre-agent-camping-store](https://github.com/aj-enns/sre-agent-camping-store/fork) for Scenarios 2 & 3
 
 ## Quick Start
 
@@ -114,7 +114,7 @@ Open [sre.azure.com](https://sre.azure.com) → Full Setup → verify:
 - **Azure resources**: 1 resource group
 - **Knowledge sources**: runbook files indexed
 
-If you skipped GitHub during setup, fork the sre-agent-camping-demo repository and add it later:
+If you skipped GitHub during setup, fork the sre-agent-camping-store repository and add it later:
 
 ```bash
 bash scripts/setup-github.sh <your-github-username>
@@ -159,14 +159,14 @@ Same break as Scenario 1, but the agent also:
 
 ```bash
 # Create sample customer issues (uses gh CLI, no PAT needed)
-bash scripts/create-sample-issues.sh <your-user>/sre-agent-camping-demo
+bash scripts/create-sample-issues.sh <your-user>/sre-agent-camping-store
 
 # Or Windows:
-"C:\Program Files\Git\bin\bash.exe" scripts/create-sample-issues.sh <your-user>/sre-agent-camping-demo
+"C:\Program Files\Git\bin\bash.exe" scripts/create-sample-issues.sh <your-user>/sre-agent-camping-store
 ```
 
 1. Go to **Builder → Scheduled tasks** → **triage-camping-issues** → **Run task now**
-2. Check `github.com/<your-user>/sre-agent-camping-demo/issues` — each `[Customer Issue]` gets:
+2. Check `github.com/<your-user>/sre-agent-camping-store/issues` — each `[Customer Issue]` gets:
    - Classification: Bug, Performance, Feature Request, Question
    - Labels: `bug`, `api-bug`, `severity-high`, etc.
    - Triage comment from the agent
@@ -221,7 +221,7 @@ azd down --purge
 |-------|-----|
 | Python not found (Windows) | Disable Store aliases, reopen CMD |
 | Agent configuration fails after infrastructure deployment | Run `bash scripts/post-provision.sh --retry`; the script exits nonzero and identifies any missing component. |
-| GitHub was skipped or is not connected | Fork `aj-enns/sre-agent-camping-demo`, then run `bash scripts/setup-github.sh <your-github-username>`. |
+| GitHub was skipped or is not connected | Fork `aj-enns/sre-agent-camping-store`, then run `bash scripts/setup-github.sh <your-github-username>`. |
 | GitHub issue creation fails | Nudge: "Use the GitHub API to create the issue" |
 | `az login` uses wrong account | Run `az logout`, sign in again, and rerun setup. Use `az login --use-device-code` only when browser sign-in is unavailable. |
 

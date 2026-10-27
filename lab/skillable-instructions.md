@@ -73,10 +73,10 @@ Welcome, @lab.User.FirstName! Deploy an **Azure SRE Agent**, break a sample app,
     gh auth login
     ```
 
-1. [] Fork the sre-agent-camping-demo repo:
+1. [] Fork the sre-agent-camping-store repo:
 
     ```
-    gh repo fork aj-enns/sre-agent-camping-demo --clone=false
+    gh repo fork aj-enns/sre-agent-camping-store --clone=false
     ```
 
 1. [] Enter your GitHub username: **@lab.TextBox(githubUser)**
@@ -93,7 +93,7 @@ Welcome, @lab.User.FirstName! Deploy an **Azure SRE Agent**, break a sample app,
 
     When the OAuth URL appears, open it in a browser and click **Authorize**.
 
-> [!Knowledge] **GitHub Issues:** Make sure Issues are enabled on your fork — go to `github.com/@lab.Variable(githubUser)/sre-agent-camping-demo` → **Settings** → **General** → **Features** → check **Issues**.
+> [!Knowledge] **GitHub Issues:** Make sure Issues are enabled on your fork — go to `github.com/@lab.Variable(githubUser)/sre-agent-camping-store` → **Settings** → **General** → **Features** → check **Issues**.
 
 ===
 
@@ -226,7 +226,7 @@ Start a **new chat** (click **+ New Chat**) for each prompt:
 
 1. [] If an incident appears, click it to see how the agent investigated **autonomously** — without you asking in chat. This is the fully automated incident response flow.
 
-1. [] If you connected GitHub, the agent may have also **created a GitHub issue** automatically with its findings. Check `github.com/@lab.Variable(githubUser)/sre-agent-camping-demo/issues` for an issue created by the agent.
+1. [] If you connected GitHub, the agent may have also **created a GitHub issue** automatically with its findings. Check `github.com/@lab.Variable(githubUser)/sre-agent-camping-store/issues` for an issue created by the agent.
 
 > [!Knowledge] This is the same investigation you did manually in Step 2, but triggered automatically by Azure Monitor. In production, this means incidents get investigated 24/7 without anyone needing to be online.
 
@@ -241,12 +241,12 @@ Start a **new chat** (click **+ New Chat**) for each prompt:
 1. [] If sample issues weren't created during setup, create them now:
 
     ```
-    "C:\Program Files\Git\bin\bash.exe" scripts/create-sample-issues.sh @lab.Variable(githubUser)/sre-agent-camping-demo
+    "C:\Program Files\Git\bin\bash.exe" scripts/create-sample-issues.sh @lab.Variable(githubUser)/sre-agent-camping-store
     ```
 
     This creates 5 simulated customer issues like "App crashes when adding items to cart" and "Can't place an order."
 
-1. [] Go to `github.com/@lab.Variable(githubUser)/sre-agent-camping-demo/issues` — verify the `[Customer Issue]` issues exist.
+1. [] Go to `github.com/@lab.Variable(githubUser)/sre-agent-camping-store/issues` — verify the `[Customer Issue]` issues exist.
 
 1. [] Go to **Builder → Scheduled tasks** → find **triage-camping-issues** → **Run task now**.
 

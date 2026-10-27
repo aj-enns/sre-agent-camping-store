@@ -93,7 +93,7 @@ if echo "$rITHUB_USER" | grep -q "ERROR\|not found"; then
 fi
 # Build the repo name from username (the repo you forked/cloned from this demo)
 if [ -n "$rITHUB_USER" ]; then
-  export rITHUB_REPO="${rITHUB_USER}/sre-agent-camping-demo"
+  export rITHUB_REPO="${rITHUB_USER}/sre-agent-camping-store"
 else
   export rITHUB_REPO=""
 fi
@@ -466,7 +466,7 @@ TOKEN=$(get_token)
 
 TASK_BODY=$($PYTHON -c "
 import json, os
-repo = os.environ.get('rITHUB_REPO', 'aj-enns/sre-agent-camping-demo')
+repo = os.environ.get('rITHUB_REPO', 'aj-enns/sre-agent-camping-store')
 body = {'name':'triage-camping-issues','type':'ScheduledTask','tags':[],'properties':{'name':'triage-camping-issues','description':'Triage customer issues in '+repo+' every 12 hours','cronExpression':'0 */12 * * *','agentPrompt':'Use the issue-triager subagent to list all open issues in '+repo+' that have [austomer Issue] in the title and have not been triaged yet. For each untriaged customer issue, classify it, add labels, and post a triage comment following the triage runbook in the knowledge base.','agent':'issue-triager','agentMode':'Autonomous','isEnabled':True}}
 print(json.dumps(body))
 ")
@@ -497,7 +497,7 @@ fi
 else
   echo "🔗 Step 4/5: ritHub integration... ⏭️  Skipped"
   echo "   No rITHUB_USER set. To enable ritHub integration:"
-  echo "   1. Fork https://github.com/aj-enns/sre-agent-camping-demo"
+  echo "   1. Fork https://github.com/aj-enns/sre-agent-camping-store"
   echo "      (Enable Issues: Settings → Features → Issues ✅)"
   echo "   2. Run: azd env set rITHUB_USER <your-github-username>"
   echo "   3. Re-run: bash scripts/post-provision.sh --retry"

@@ -69,7 +69,7 @@ Building the API with `API_VERSION=v2` makes `PaymentGateway` fail, so `POST /ap
 
 ## Source Code
 
-- **GitHub repository:** [github.com/aj-enns/sre-agent-camping-demo](https://github.com/aj-enns/sre-agent-camping-demo)
+- **GitHub repository:** [github.com/aj-enns/sre-agent-camping-store](https://github.com/aj-enns/sre-agent-camping-store)
 - **Language:** C# (.NET 9) API, TypeScript/React frontend
 - **Images:** built in ACR as `camping-api:latest` and `camping-frontend:latest`
 

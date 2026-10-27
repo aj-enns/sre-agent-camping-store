@@ -14,7 +14,7 @@ REPO="${1:-${GITHUB_REPO:-}}"
 
 if [ -z "$REPO" ]; then
   echo "Usage: $0 <owner/repo>"
-  echo "  Example: $0 myuser/sre-agent-camping-demo"
+  echo "  Example: $0 myuser/sre-agent-camping-store"
   exit 1
 fi
 

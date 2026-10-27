@@ -55,7 +55,7 @@
   <rect x="524" y="210" width="195" height="20" rx="4" fill="#fff" stroke="#008272" stroke-width="0.8"/>
   <text x="621" y="224" text-anchor="middle" font-size="9" fill="#333">🚨 Response Plan → Monitor</text>
   <rect x="724" y="210" width="195" height="20" rx="4" fill="#fff" stroke="#333" stroke-width="0.8"/>
-  <text x="821" y="224" text-anchor="middle" font-size="9" fill="#333">📂 GitHub: sre-agent-camping-demo (optional)</text>
+  <text x="821" y="224" text-anchor="middle" font-size="9" fill="#333">📂 GitHub: sre-agent-camping-store (optional)</text>
 
   <rect x="524" y="236" width="395" height="20" rx="4" fill="#fff" stroke="#5c2d91" stroke-width="0.8"/>
   <text x="721" y="250" text-anchor="middle" font-size="9" fill="#333">🔐 Managed Identity · GitHub OAuth · DevOps + Python tools</text>
