@@ -1,10 +1,13 @@
 # Image sources
 
-These illustrative photos were downloaded from [Pexels](https://www.pexels.com/) and are served locally by the storefront. Pexels' [license](https://www.pexels.com/license/) permits use on websites and ecommerce shops; review its current terms before reusing the files elsewhere. The images do not depict or endorse the demo products.
+These illustrative photos are served locally by the storefront. The catalog photos were downloaded from [Pexels](https://www.pexels.com/), whose [license](https://www.pexels.com/license/) permits use on websites and ecommerce shops. The images do not depict or endorse the demo products.
+
+The hero photo is by **Scott Goodwill** on [Unsplash](https://unsplash.com/photos/orange-camping-tent-near-green-trees-y8Ngwq34_Ak), used under the [Unsplash license](https://unsplash.com/license/). The 4,498 x 3,000 original is served as a 2,560-pixel-wide WebP. Review the current license terms before reusing these files elsewhere.
 
 | File | Used for |
 | --- | --- |
-| `campsite-hero.jpg` | Storefront feature and alpine tent |
+| `camping-forest-hero.webp` | Storefront feature: orange tent overlooking a forest campsite |
+| `campsite-hero.jpg` | Alpine tent |
 | `headlamp.jpg` | Night hiking |
 | `hydration-trail.jpg` | Trail hydration |
 | `hydration.jpg` | Water bottle |

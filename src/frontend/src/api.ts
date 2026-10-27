@@ -39,6 +39,10 @@ export class ApiClient {
     return this.request<string[]>('/products/categories');
   }
 
+  getProduct(id: number) {
+    return this.request<Product>(`/products/${id}`);
+  }
+
   getCart(userId: string) {
     return this.request<Cart>(`/cart/${userId}`);
   }

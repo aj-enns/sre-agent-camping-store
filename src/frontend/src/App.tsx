@@ -1,41 +1,26 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useApi } from './api';
+import { money, productArt } from './catalog';
+import ProductPage from './ProductPage';
 import type { Cart, Order, Product } from './types';
 
 const USER_ID = 'demo-user';
-const CATEGORY_ART: Record<string, { src: string; alt: string }> = {
-  Tents: { src: '/images/tents.jpg', alt: 'Tents at a mountain campsite' },
-  'Sleeping Bags': { src: '/images/sleeping-bags.jpg', alt: 'A camper resting in a sleeping bag' },
-  'Stoves & Cookware': { src: '/images/stoves-cookware.jpg', alt: 'A camp stove being used outdoors' },
-  Lighting: { src: '/images/lighting.jpg', alt: 'A lantern glowing at a campsite' },
-  Packs: { src: '/images/packs.jpg', alt: 'Hikers wearing packs in the mountains' },
-  Hydration: { src: '/images/hydration.jpg', alt: 'A hiker taking a water break' },
-};
-const PRODUCT_ART: Record<number, { src: string; alt: string }> = {
-  1: { src: '/images/tents.jpg', alt: 'Backpacking tents at a mountain campsite' },
-  2: { src: '/images/tents-field.jpg', alt: 'Family tents pitched in an open campsite' },
-  3: { src: '/images/campsite-hero.jpg', alt: 'A tent at sunset beneath a mountain ridge' },
-  4: { src: '/images/sleeping-bags.jpg', alt: 'A camper resting in a sleeping bag' },
-  5: { src: '/images/sleeping-bag-tent.jpg', alt: 'Sleeping bags arranged inside a tent' },
-  6: { src: '/images/sleeping-bag-waterfall.jpg', alt: 'Camping sleep gear set up outdoors' },
-  7: { src: '/images/stove-backpacking.jpg', alt: 'A pot being used on a compact camp stove' },
-  8: { src: '/images/stoves-cookware.jpg', alt: 'A two-burner camp stove at a campsite' },
-  9: { src: '/images/stove-cookset.jpg', alt: 'Metal cookware prepared for an outdoor meal' },
-  10: { src: '/images/headlamp.jpg', alt: 'A hiker following a mountain trail at night' },
-  11: { src: '/images/lantern-camp.jpg', alt: 'A lantern illuminating a campsite table' },
-  12: { src: '/images/tents-alpine.jpg', alt: 'Winter hikers crossing an alpine slope' },
-  13: { src: '/images/packs-trail.jpg', alt: 'A hiker carrying a daypack on a trail' },
-  14: { src: '/images/hydration.jpg', alt: 'A hiker drinking from a water bottle' },
-  15: { src: '/images/hydration-trail.jpg', alt: 'A hiker pausing for water on the trail' },
-};
-
-function productArt(product: Product) {
-  return PRODUCT_ART[product.id] ?? CATEGORY_ART[product.category] ?? CATEGORY_ART.Tents;
-}
-
-const money = (amount: number) => `$${amount.toFixed(2)}`;
 type View = 'shop' | 'cart' | 'orders';
+type Route = { view: View } | { view: 'product'; productId: number | null };
 type Runner = <T>(action: () => Promise<T>) => Promise<T | undefined>;
+type AddToCart = (productId: number, quantity?: number) => Promise<boolean>;
+type Filters = { category: string; query: string };
+
+function readRoute(): Route {
+  const hash = window.location.hash;
+  if (hash.startsWith('#/products/')) {
+    const id = Number(hash.slice('#/products/'.length));
+    return { view: 'product', productId: /^[1-9]\d*$/.test(hash.slice('#/products/'.length)) && Number.isSafeInteger(id) && id <= 2147483647 ? id : null };
+  }
+  if (hash === '#/cart') return { view: 'cart' };
+  if (hash === '#/orders') return { view: 'orders' };
+  return { view: 'shop' };
+}
 
 function BrandMark() {
   return (
@@ -66,7 +51,9 @@ function BagIcon() {
 
 export default function App() {
   const api = useApi();
-  const [view, setView] = useState<View>('shop');
+  const [route, setRoute] = useState<Route>(readRoute);
+  const view = route.view;
+  const [filters, setFilters] = useState<Filters>({ category: '', query: '' });
   const [cart, setCart] = useState<Cart | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -89,29 +76,58 @@ export default function App() {
     refreshCart();
   }, [refreshCart]);
 
+  useEffect(() => {
+    const navigate = () => {
+      setRoute(readRoute());
+      setError(null);
+      requestAnimationFrame(() => {
+        const catalog = window.location.hash === '#catalog' ? document.getElementById('catalog') : null;
+        const target = catalog ?? document.querySelector<HTMLElement>('main');
+        target?.focus({ preventScroll: true });
+        if (catalog) catalog.scrollIntoView({ block: 'start' });
+        else window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      });
+    };
+    window.addEventListener('hashchange', navigate);
+    return () => window.removeEventListener('hashchange', navigate);
+  }, []);
+
+  useEffect(() => {
+    const title = view === 'cart' ? 'Your cart' : view === 'orders' ? 'Your orders' : view === 'product' ? 'Product details' : 'Camping Supplies';
+    document.title = `${title} | Trailhead Outfitters`;
+  }, [view]);
+
+  const addToCart: AddToCart = async (productId, quantity = 1) => {
+    const nextCart = await run(() => api.addToCart(USER_ID, productId, quantity));
+    if (!nextCart) return false;
+    setCart(nextCart);
+    return true;
+  };
+
   const cartCount = cart?.items.reduce((count, item) => count + item.quantity, 0) ?? 0;
 
   return (
     <>
       <header className="topbar">
-        <button className="brand" type="button" onClick={() => setView('shop')} aria-label="Trailhead Outfitters home">
+        <a className="brand" href="#/" aria-label="Trailhead Outfitters home">
           <span className="brand-mark"><BrandMark /></span>
           <span className="brand-name">Trailhead <span>Outfitters</span></span>
-        </button>
+        </a>
         <nav className="top-nav" aria-label="Main navigation">
-          <button className={view === 'shop' ? 'nav-link active' : 'nav-link'} type="button" onClick={() => setView('shop')} aria-current={view === 'shop' ? 'page' : undefined}>Gear</button>
-          <button className={view === 'cart' ? 'nav-link active' : 'nav-link'} type="button" onClick={() => setView('cart')} aria-current={view === 'cart' ? 'page' : undefined}>
+          <a className={view === 'shop' || view === 'product' ? 'nav-link active' : 'nav-link'} href="#/" aria-current={view === 'shop' ? 'page' : undefined}>Gear</a>
+          <a className={view === 'cart' ? 'nav-link active' : 'nav-link'} href="#/cart" aria-current={view === 'cart' ? 'page' : undefined}>
             <BagIcon /> Cart <span className="cart-count">{cartCount}</span>
-          </button>
-          <button className={view === 'orders' ? 'nav-link active' : 'nav-link'} type="button" onClick={() => setView('orders')} aria-current={view === 'orders' ? 'page' : undefined}>Orders</button>
+          </a>
+          <a className={view === 'orders' ? 'nav-link active' : 'nav-link'} href="#/orders" aria-current={view === 'orders' ? 'page' : undefined}>Orders</a>
         </nav>
       </header>
 
       {error && <div className="error-banner" role="alert">{error}</div>}
 
-      <main className={`page page-${view}`}>
-        {view === 'shop' && <Shop run={run} onCartChange={setCart} />}
-        {view === 'cart' && <CartView cart={cart} run={run} onCartChange={setCart} onBrowse={() => setView('shop')} onOrdered={() => setView('orders')} />}
+      <main className={`page page-${view}`} tabIndex={-1}>
+        {view === 'shop' && <Shop run={run} onAdd={addToCart} filters={filters} onFiltersChange={setFilters} />}
+        {route.view === 'product' && <ProductPage key={route.productId ?? 'missing'} productId={route.productId} onAdd={addToCart} onCategorySelect={(category) => setFilters({ category, query: '' })} />}
+        {view === 'cart' && <CartView cart={cart} run={run} onCartChange={setCart} onBrowse={() => { window.location.hash = '#/'; }} onOrdered={() => { window.location.hash = '#/orders'; }} />}
         {view === 'orders' && <Orders run={run} />}
       </main>
 
@@ -123,12 +139,18 @@ export default function App() {
   );
 }
 
-function Shop({ run, onCartChange }: { run: Runner; onCartChange: (cart: Cart) => void }) {
+function Shop({ run, onAdd, filters, onFiltersChange }: {
+  run: Runner;
+  onAdd: AddToCart;
+  filters: Filters;
+  onFiltersChange: (filters: Filters) => void;
+}) {
   const api = useApi();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
-  const [category, setCategory] = useState('');
-  const [query, setQuery] = useState('');
+  const { category, query } = filters;
+  const setCategory = (category: string) => onFiltersChange({ ...filters, category });
+  const setQuery = (query: string) => onFiltersChange({ ...filters, query });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -144,11 +166,6 @@ function Shop({ run, onCartChange }: { run: Runner; onCartChange: (cart: Cart) =
     });
     return () => { active = false; };
   }, [api, category, query, run]);
-
-  const add = async (product: Product) => {
-    const nextCart = await run(() => api.addToCart(USER_ID, product.id));
-    if (nextCart) onCartChange(nextCart);
-  };
 
   return (
     <div className="shop-layout">
@@ -173,7 +190,7 @@ function Shop({ run, onCartChange }: { run: Runner; onCartChange: (cart: Cart) =
 
       <section className="storefront" aria-label="Camping gear catalog">
         <section className="feature-panel" aria-labelledby="feature-title">
-          <img className="feature-image" src="/images/campsite-hero.jpg" alt="A tent at sunset beneath a mountain ridge" />
+          <img className="feature-image" src="/images/camping-forest-hero.webp" alt="View from an orange tent toward a stone fire ring and forest campsite" />
           <div className="feature-overlay" />
           <div className="feature-copy">
             <h2 id="feature-title">Make room<br />for outside.</h2>
@@ -183,7 +200,7 @@ function Shop({ run, onCartChange }: { run: Runner; onCartChange: (cart: Cart) =
           <span className="feature-caption">Trailhead Outfitters <span>—</span> Camping collection</span>
         </section>
 
-        <section className="catalog" id="catalog" aria-labelledby="catalog-title">
+        <section className="catalog" id="catalog" aria-labelledby="catalog-title" tabIndex={-1}>
           <div className="catalog-heading">
             <div>
               <h2 id="catalog-title">{category || 'Pack for the outdoors'}</h2>
@@ -206,13 +223,13 @@ function Shop({ run, onCartChange }: { run: Runner; onCartChange: (cart: Cart) =
             <div className="loading-state" role="status">Loading the collection…</div>
           ) : products.length > 0 ? (
             <div className="product-grid">
-              {products.map((product) => <ProductCard key={product.id} product={product} onAdd={add} />)}
+              {products.map((product) => <ProductCard key={product.id} product={product} onAdd={onAdd} />)}
             </div>
           ) : (
             <div className="empty-state">
               <h3>No gear found</h3>
               <p>Try a different search or choose another category.</p>
-              <button className="text-button" type="button" onClick={() => { setQuery(''); setCategory(''); }}>Show all gear <span aria-hidden="true">↗</span></button>
+              <button className="text-button" type="button" onClick={() => onFiltersChange({ query: '', category: '' })}>Show all gear <span aria-hidden="true">↗</span></button>
             </div>
           )}
         </section>
@@ -221,22 +238,32 @@ function Shop({ run, onCartChange }: { run: Runner; onCartChange: (cart: Cart) =
   );
 }
 
-function ProductCard({ product, onAdd }: { product: Product; onAdd: (product: Product) => void }) {
+function ProductCard({ product, onAdd }: { product: Product; onAdd: AddToCart }) {
   const art = productArt(product);
+  const [adding, setAdding] = useState(false);
+  const add = async () => {
+    setAdding(true);
+    await onAdd(product.id);
+    setAdding(false);
+  };
   return (
     <article className="product-card">
-      <div className="product-image-wrap">
-        <img src={art.src} alt={art.alt} loading="lazy" />
-        <span className="product-category">{product.category}</span>
-      </div>
-      <div className="product-details">
-        <div className="product-heading">
-          <h3>{product.name}</h3>
-          <span className="product-price">{money(product.price)}</span>
+      <a className="product-card-link" href={`#/products/${product.id}`} aria-label={`View ${product.name}`}>
+        <div className="product-image-wrap">
+          <img src={art.src} alt={art.alt} loading="lazy" />
+          <span className="product-category">{product.category}</span>
         </div>
-        <p className="product-description">{product.description}</p>
-        <button className="add-button" type="button" onClick={() => onAdd(product)} aria-label={`Add ${product.name} to cart`}>
-          Add to cart <span aria-hidden="true">+</span>
+        <div className="product-details">
+          <div className="product-heading">
+            <h3>{product.name}</h3>
+            <span className="product-price">{money(product.price)}</span>
+          </div>
+          <p className="product-description">{product.description}</p>
+        </div>
+      </a>
+      <div className="product-card-actions">
+        <button className="add-button" type="button" disabled={adding || product.stockQuantity < 1} onClick={add} aria-label={product.stockQuantity < 1 ? `${product.name} is out of stock` : `Add ${product.name} to cart`}>
+          {adding ? 'Adding...' : product.stockQuantity < 1 ? 'Out of stock' : 'Add to cart'} <span aria-hidden="true">+</span>
         </button>
       </div>
     </article>
