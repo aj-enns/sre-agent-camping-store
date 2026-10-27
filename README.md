@@ -68,15 +68,15 @@ The `setup.sh` script handles prerequisites, login, and deployment. The `azd` po
 
 **macOS / Linux:**
 ```bash
-git clone https://github.com/microsoft/sre-agent.git
-cd sre-agent/labs/starter-lab
+git clone https://github.com/aj-enns/sre-agent-camping-store.git
+cd sre-agent-camping-store
 bash scripts/setup.sh
 ```
 
 **Windows:**
 ```cmd
-git clone https://github.com/microsoft/sre-agent.git
-cd sre-agent\labs\starter-lab
+git clone https://github.com/aj-enns/sre-agent-camping-store.git
+cd sre-agent-camping-store
 "C:\Program Files\Git\bin\bash.exe" scripts/setup.sh
 ```
 

@@ -1,8 +1,8 @@
 # Azure Developer CLI (azd) template for SRE Agent Lab
 # Run: azd up
-name: sre-agent-lab
+name: sre-agent-camping-store
 metadata:
-  template: sre-agent-lab@1.0.0
+  template: sre-agent-camping-store@1.0.0
 
 infra:
   provider: bicep
