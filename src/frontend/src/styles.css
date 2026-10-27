@@ -1,0 +1,21 @@
+:root { --forest: #2d5a27; --earth: #8b5a2b; --sand: #f6f1e7; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; background: var(--sand); color: #222; }
+.nav { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.5rem; background: var(--forest); color: #fff; }
+.nav h1 { margin: 0; font-size: 1.4rem; cursor: pointer; }
+.nav button { margin-left: 0.5rem; }
+main { max-width: 1100px; margin: 1.5rem auto; padding: 0 1rem; }
+button { background: var(--earth); color: #fff; border: 0; border-radius: 6px; padding: 0.4rem 0.8rem; cursor: pointer; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+input, select { padding: 0.4rem; border: 1px solid #bbb; border-radius: 6px; }
+.filters { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
+.card { background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12); }
+.card .icon { font-size: 3rem; }
+.card h3 { margin: 0.25rem 0; }
+.row { display: flex; justify-content: space-between; align-items: center; }
+.muted { color: #666; font-size: 0.85rem; margin: 0; }
+.error { background: #fdecea; border: 1px solid #d93025; color: #8a1f17; padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem; }
+.badge { background: var(--forest); color: #fff; border-radius: 12px; padding: 0.1rem 0.6rem; font-size: 0.8rem; }
+table { width: 100%; background: #fff; border-collapse: collapse; }
+td { padding: 0.5rem; border-bottom: 1px solid #eee; }
