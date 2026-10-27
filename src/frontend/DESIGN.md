@@ -1,0 +1,25 @@
+# Storefront design system
+
+The storefront is a photo-led camping-gear catalog with the visual language of an expedition equipment label. It serves a demo shopping flow, not a real retailer. Keep SRE lab terminology and controls out of the shopping experience; product, inventory, and order content must remain grounded in the API's demo data.
+
+## Visual language
+
+- **Palette:** charcoal `#121b21` and slate `#1d2931` anchor navigation and panels; cool paper `#f1f3f2` and white provide contrast; safety orange `#f2632e` marks primary actions and active states.
+- **Typography:** Barlow Condensed for uppercase display headings and brand marks; DM Sans for interface and body copy. Retain the system-font fallbacks.
+- **Surfaces:** crisp, square-edged panels and thin cool-gray rules. Use the orange accent sparingly for emphasis rather than decoration.
+- **Photography:** use local, illustrative outdoor photos with descriptive alt text. Do not imply that a photo depicts or endorses the specific demo product. See [image sources and license](IMAGE-CREDITS.md).
+
+## Layout and behavior
+
+- The shop opens with a dark header, category rail, wide campsite feature, and searchable three-column catalog.
+- At widths up to 1,050px, reduce the catalog to two columns; at 720px, convert the category rail to a horizontal scroller and stack checkout content; at 390px, use one catalog column.
+- Keep category filtering, search, cart quantity controls, demo checkout, and order history functional and API-backed.
+- Provide visible keyboard focus, clear disabled states, and reduced-motion behavior. Preserve readable contrast across dark panels and white surfaces.
+
+## Content guardrails
+
+- Use the API's seeded product names, descriptions, categories, and prices; don't invent reviews, stock counts, promotions, or customer claims.
+- Keep the demo-checkout disclosure visible and never suggest that a real payment is processed.
+- Keep the footer's sample-catalog and illustrative-photography disclosures.
+
+The product purpose and constraints are documented in [`PRODUCT.md`](../../PRODUCT.md). The implementation's first-viewport brief is in [`index.html`](index.html).
