@@ -125,6 +125,40 @@ bash scripts/post-provision.sh --skip-build
 Always use `--skip-build` here; azd already deployed the website.
 `scripts/setup.sh` remains an interactive full-lab alternative and calls that helper after `azd up`.
 
+### Restore the live report after rebuilding
+
+The saved specification is `sre-config/reports/camping-api-health.json`.
+To recreate **Camping Store – API Health Overview** after an azd deployment:
+
+```powershell
+azd env set RESTORE_LIVE_REPORT true
+azd up
+```
+
+Install Python 3 first. The opt-in post-deploy hook runs after `azd up` or `azd deploy`.
+It reads the new agent endpoint, API name, and workspace from the selected deployment.
+An existing saved report is left unchanged.
+
+The script uses preview data-plane endpoints to start report authoring, not a report-import API.
+Recreation consumes agent units; layout may differ. It requests read-only monitoring tools and never
+changes permissions or approves tools for you. Open the printed authoring-thread link if approval
+or clarification is needed. A pending, failed, or timed-out run exits nonzero; rerunning reuses the pending thread.
+Completion means a saved report with nonempty HTML was verified, not that every query was successfully executed.
+
+To run it separately, including after a GitHub Actions deployment once the selected azd environment
+has current outputs (`azd env refresh`):
+
+```powershell
+python .\scripts\restore-live-report.py
+```
+
+Use `--dry-run` to print the resolved specification without authoring.
+The deployment identity needs SRE Agent read/write access and the agent needs access to its monitoring workspace.
+The website workflow does **not** run this step or receive extra SRE permissions.
+Disable the hook with `azd env set RESTORE_LIVE_REPORT false`.
+Keep `.azure/` for resumable authoring state; it contains no access tokens.
+This recreates the report definition, not deleted telemetry, past incidents, or the original report URL.
+
 ## Troubleshooting
 
 | Failure | Check |
