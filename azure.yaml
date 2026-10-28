@@ -41,3 +41,13 @@ hooks:
         $ErrorActionPreference = 'Stop'
         & "$env:ProgramFiles\Git\bin\bash.exe" scripts/azd-preprovision.sh
         exit $LASTEXITCODE
+  postdeploy:
+    posix:
+      shell: sh
+      run: bash scripts/azd-postdeploy.sh
+    windows:
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        & "$env:ProgramFiles\Git\bin\bash.exe" scripts/azd-postdeploy.sh
+        exit $LASTEXITCODE

@@ -1,0 +1,16 @@
+{
+  "name": "Camping Store \u2013 API Health Overview",
+  "requirements": [
+    "Create and save a LIVE report with the exact name above, not a chat-only answer or static HTML download.",
+    "Use the supplied deployment resources, not names, IDs, endpoints, or telemetry from a previous installation.",
+    "Use the read-only system-mcp-monitor_monitor_workspace_log_query tool. Its arguments include subscription, resource-group, workspace, table, query, hours, and limit. Discover/verify the actual tool schema before calling it.",
+    "Query AppRequests for request volume, HTTP 5xx count and percentage, and p95 request latency. Show trend charts, a status-code breakdown, and a sortable endpoint breakdown with request count, 5xx rate, and p95 latency.",
+    "Query ContainerAppConsoleLogs for recent error log lines. Filter ContainerAppName to the supplied API app. Do not rely on AppExceptions for console errors.",
+    "Explain that console logs can arrive several minutes after request telemetry. An empty error-log table does not guarantee there were no errors.",
+    "Provide a time-range selector with 1h, 24h, and 7d options. Apply the selection consistently to every query and visualization.",
+    "Use a clean operational-dashboard layout with summary metrics, trends, endpoint details, and recent errors. Label units and timestamps. Handle empty telemetry and query failures explicitly; never substitute invented or demonstration measurements.",
+    "Use the saved read-only tool for refreshes. Do not use an LLM on refresh, schedule background work, or add write-action buttons.",
+    "Do not change resources, roles, permissions, connectors, or tool-approval policy. Only report-authoring tools may save the report; use read-only tools for Azure data. If a prerequisite or approval is missing, explain it in the authoring thread and stop.",
+    "Once saved, return the report link. Do not create a second report with the same name."
+  ]
+}
