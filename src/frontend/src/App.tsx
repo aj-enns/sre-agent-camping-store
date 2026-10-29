@@ -2,9 +2,26 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useApi } from './api';
 import { money, productArt } from './catalog';
 import ProductPage from './ProductPage';
+import DemoPanel from './DemoPanel';
 import type { Cart, Order, Product } from './types';
 
-const USER_ID = 'demo-user';
+function shopperId() {
+  const key = 'trailhead-shopper';
+  const existing = localStorage.getItem(key);
+  if (existing?.startsWith('shopper-')) return existing;
+  const id = `shopper-${crypto.randomUUID()}`;
+  localStorage.setItem(key, id);
+  return id;
+}
+const USER_ID = shopperId();
+const DEMO_CITIES = [
+  'Toronto, ON', 'Ottawa, ON', 'Hamilton, ON', 'London, ON', 'Kingston, ON',
+  'Windsor, ON', 'Kitchener, ON', 'Sudbury, ON', 'Thunder Bay, ON', 'Montreal, QC',
+  'Quebec City, QC', 'Gatineau, QC', 'Sherbrooke, QC', 'Trois-Rivieres, QC', 'Vancouver, BC',
+  'Victoria, BC', 'Kelowna, BC', 'Kamloops, BC', 'Calgary, AB', 'Edmonton, AB',
+  'Red Deer, AB', 'Saskatoon, SK', 'Regina, SK', 'Winnipeg, MB', 'Brandon, MB',
+  'Halifax, NS', 'Moncton, NB', 'Fredericton, NB', 'Charlottetown, PE', "St. John's, NL",
+];
 type View = 'shop' | 'cart' | 'orders';
 type Route = { view: View } | { view: 'product'; productId: number | null };
 type Runner = <T>(action: () => Promise<T>) => Promise<T | undefined>;
@@ -143,6 +160,7 @@ export default function App() {
           </nav>
         </header>
 
+        <DemoPanel />
         {error && <div className="error-banner" role="alert">{error}</div>}
         <div className="product-add-status" role="status" aria-live="polite">
           {addedQuantity > 0 && <><span>{addedQuantity} {addedQuantity === 1 ? 'item' : 'items'} added to your cart.</span> <a href="#/cart">View cart &rarr;</a></>}
@@ -305,6 +323,18 @@ function CartView({ cart, run, onCartChange, onBrowse, onOrdered }: {
   const api = useApi();
   const [address, setAddress] = useState('');
   const [payment, setPayment] = useState('card');
+  const [placing, setPlacing] = useState(false);
+  const placingRef = useRef(false);
+  const defaultsApplied = useRef(false);
+
+  useEffect(() => {
+    if (defaultsApplied.current) return;
+    defaultsApplied.current = true;
+    setAddress(DEMO_CITIES[Math.floor(Math.random() * DEMO_CITIES.length)]);
+    const nextPayment = sessionStorage.getItem('trailhead-last-payment') === 'card' ? 'paypal' : 'card';
+    setPayment(nextPayment);
+    sessionStorage.setItem('trailhead-last-payment', nextPayment);
+  }, []);
 
   const update = async (id: number, quantity: number) => {
     const nextCart = await run(() => quantity < 1
@@ -314,7 +344,12 @@ function CartView({ cart, run, onCartChange, onBrowse, onOrdered }: {
   };
 
   const checkout = async () => {
+    if (placingRef.current) return;
+    placingRef.current = true;
+    setPlacing(true);
     const order = await run(() => api.placeOrder(USER_ID, address, payment));
+    placingRef.current = false;
+    setPlacing(false);
     if (!order) return;
     const nextCart = await run(() => api.getCart(USER_ID));
     if (nextCart) onCartChange(nextCart);
@@ -363,8 +398,8 @@ function CartView({ cart, run, onCartChange, onBrowse, onOrdered }: {
           <h2>Order details</h2>
           <div className="total-line"><span>Subtotal</span><strong>{money(cart.total)}</strong></div>
           <p className="demo-note">Demo checkout only. No real payment is processed.</p>
-          <label className="form-field">Shipping address
-            <input value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Street, city, ZIP" />
+          <label className="form-field">Shipping address (demo)
+            <input value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Canadian city" />
           </label>
           <label className="form-field">Payment method
             <select value={payment} onChange={(event) => setPayment(event.target.value)}>
@@ -372,7 +407,7 @@ function CartView({ cart, run, onCartChange, onBrowse, onOrdered }: {
               <option value="paypal">PayPal (demo)</option>
             </select>
           </label>
-          <button className="primary-button checkout-button" type="button" disabled={!address.trim()} onClick={checkout}>Place demo order <span aria-hidden="true">↗</span></button>
+          <button className="primary-button checkout-button" type="button" disabled={placing || !address.trim()} onClick={checkout}>{placing ? 'Placing order...' : 'Place demo order'} <span aria-hidden="true">↗</span></button>
         </aside>
       </div>
     </section>
@@ -401,7 +436,7 @@ function Orders({ run }: { run: Runner }) {
       ) : (
         <div className="orders-list">
           {orders.map((order) => (
-            <article className="order-card" key={order.id}>
+            <article className="order-card" key={`${order.orderDate}-${order.id}`}>
               <div className="order-card-heading">
                 <div><span className="product-category">Order #{order.id}</span><h2>{new Date(order.orderDate).toLocaleDateString()}</h2></div>
                 <span className="order-status">{order.status}</span>

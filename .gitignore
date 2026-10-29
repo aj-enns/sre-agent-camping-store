@@ -3,4 +3,5 @@ bin/
 obj/
 node_modules/
 src/frontend/build/
+src/frontend/data/
 .azure/

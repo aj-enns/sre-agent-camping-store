@@ -9,10 +9,18 @@ function installFakeApi() {
   const state = window.__productPageTest = {
     products, cart: { userId: 'demo-user', items: [], total: 0 },
     calls: [], failLoad: false, failAdd: false, holdAdd: false, releaseAdd: null,
+    metricsCalls: 0, failMetrics: false,
+    metrics: { sessionId: 'fixture-session', status: 'healthy', totalSales: 189.99, orderCount: 1,
+      averagePer10Seconds: 30, estimatedLoss: 0, hasLossBaseline: false,
+      currentOutage: null, recentOutages: [], lastCheckAt: Date.now() },
   };
   const originalFetch = window.fetch.bind(window);
   window.fetch = async (input, options = {}) => {
     const url = new URL(input instanceof Request ? input.url : input, window.parent.location.href);
+    if (url.pathname === '/demo/metrics') {
+      state.metricsCalls++;
+      return Response.json(state.failMetrics ? { message: 'Unavailable' } : state.metrics, { status: state.failMetrics ? 503 : 200 });
+    }
     if (!url.pathname.startsWith('/api/')) return originalFetch(input, options);
     const method = options.method ?? 'GET';
     const body = options.body ? JSON.parse(options.body) : null;
@@ -27,8 +35,8 @@ function installFakeApi() {
       const product = products.find((item) => item.id === Number(url.pathname.split('/').pop()));
       return response(product ?? {}, product ? 200 : 404);
     }
-    if (url.pathname === '/api/cart/demo-user' && method === 'GET') return response(state.cart);
-    if (url.pathname === '/api/cart/demo-user/items' && method === 'POST') {
+    if (/^\/api\/cart\/shopper-[^/]+$/.test(url.pathname) && method === 'GET') return response(state.cart);
+    if (/^\/api\/cart\/shopper-[^/]+\/items$/.test(url.pathname) && method === 'POST') {
       if (state.holdAdd) await new Promise((resolve) => { state.releaseAdd = resolve; });
       if (state.failAdd) return response({ message: 'Test cart unavailable' }, 500);
       const product = products.find((item) => item.id === body.productId);
@@ -38,7 +46,7 @@ function installFakeApi() {
       state.cart.total = state.cart.items.reduce((total, item) => total + item.product.price * item.quantity, 0);
       return response(state.cart);
     }
-    if (url.pathname === '/api/orders/user/demo-user') return response([]);
+    if (/^\/api\/orders\/user\/shopper-[^/]+$/.test(url.pathname)) return response([]);
     throw new Error(`Unexpected test API request: ${method} ${url.pathname}`);
   };
 }
@@ -95,6 +103,10 @@ export async function runProductPageTests() {
       assert(find('.store-header').contains(doc().elementFromPoint(message.left + 10, message.top + 10)), `${label}: message is above scrolling content at ${width}px`);
       assert(doc().documentElement.scrollWidth <= width, `${label}: no horizontal overflow at ${width}px`);
       assert(Number.parseFloat(frame.contentWindow.getComputedStyle(doc().documentElement).scrollPaddingTop) >= find('.store-header').getBoundingClientRect().height, `${label}: anchor clearance includes the message at ${width}px`);
+      find('.demo-history').open = true;
+      await new Promise((resolve) => setTimeout(resolve, 25));
+      assert(find('.demo-history-body').getBoundingClientRect().top >= message.bottom - 1, `${label}: expanded history does not cover the toast at ${width}px`);
+      find('.demo-history').open = false;
     }
     frame.style.width = '1280px';
     frame.style.height = '900px';
@@ -103,6 +115,9 @@ export async function runProductPageTests() {
 
   try {
     await waitFor(() => find('.product-card-link'), 'catalog');
+    await waitFor(() => find('.demo-totals')?.textContent.includes('$189.99'), 'shared sales panel');
+    assert(find('.demo-totals').textContent.includes('$30.00'), 'Shared panel displays server-provided sales and average');
+    assert(!find('.demo-panel button'), 'Presentation panel has no public reset control');
     assert(find('.product-card:last-child .add-button').disabled, 'Catalog quick-add also respects out-of-stock items');
     input('.search-field input', 'TrailBlazer');
     await waitFor(() => find('.search-field input')?.value === 'TrailBlazer' && doc().querySelectorAll('.product-card').length === 1, 'filtered catalog');
@@ -135,6 +150,7 @@ export async function runProductPageTests() {
     await waitFor(() => find('.product-line-total').textContent.includes('$379.98'), 'subtotal');
     assert(true, 'Subtotal follows the selected quantity');
     const state = frame.contentWindow.__productPageTest;
+    assert(state.calls.some((call) => /\/cart\/shopper-/.test(call.path)), 'Browser uses an isolated anonymous shopper rather than the shared demo-user cart');
     state.holdAdd = true;
     click('.product-add-button');
     await waitFor(() => state.releaseAdd && find('.product-add-button').disabled, 'pending cart request');
@@ -148,12 +164,20 @@ export async function runProductPageTests() {
     click('.product-add-status a');
     await waitFor(() => find('.cart-item'), 'cart page');
     assert(find('.quantity-control span').textContent === '2', 'View cart displays the selected item quantity');
+    await waitFor(() => find('.form-field input')?.value, 'prefilled demo city');
+    assert(/, (ON|QC|BC|AB|SK|MB|NS|NB|PE|NL)$/.test(find('.form-field input').value), 'Opening the cart prefills a Canadian city');
+    assert(!find('.checkout-button').disabled, 'Prefilled checkout is ready without typing an address');
+    const firstPayment = find('.form-field select').value;
+    input('.form-field input', 'Ottawa, ON');
+    assert(find('.form-field input').value === 'Ottawa, ON', 'Prefilled shipping city remains editable');
     frame.contentWindow.history.back();
     await waitFor(() => find('#product-title'), 'browser Back');
     assert(frame.contentWindow.location.hash === '#/products/1', 'Browser Back restores the product page');
     frame.contentWindow.history.forward();
     await waitFor(() => find('.cart-item'), 'browser Forward');
     assert(frame.contentWindow.location.hash === '#/cart', 'Browser Forward restores the cart');
+    await waitFor(() => find('.form-field select')?.value !== firstPayment, 'alternating payment method');
+    assert(find('.form-field select').value === (firstPayment === 'card' ? 'paypal' : 'card'), 'Reopening the cart alternates the demo payment method');
     frame.contentWindow.history.back();
     await waitFor(() => find('#product-title'), 'browser Back to details');
     click('.back-link');
@@ -202,6 +226,17 @@ export async function runProductPageTests() {
     frame.style.width = '390px';
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     assert(doc().documentElement.scrollWidth <= 390 && frame.contentWindow.getComputedStyle(find('.product-page-layout')).gridTemplateColumns.split(' ').length === 1, 'Mobile product page stacks without horizontal overflow');
+    const updatedState = frame.contentWindow.__productPageTest;
+    updatedState.metrics.totalSales = 400;
+    const polls = updatedState.metricsCalls;
+    await waitFor(() => updatedState.metricsCalls > polls && find('.demo-totals').textContent.includes('$400.00'), 'five-second metrics refresh');
+    assert(true, 'Panel refreshes actual server totals without reloading the page');
+    updatedState.failMetrics = true;
+    await waitFor(() => find('.demo-caption').textContent.includes('unavailable'), 'metrics failure');
+    assert(find('.demo-caption').textContent.includes('Last received'), 'Failed metrics requests explicitly label stale values');
+    updatedState.failMetrics = false;
+    await waitFor(() => find('.demo-caption').textContent.includes('Cart available'), 'metrics recovery');
+    assert(true, 'Polling recovers after failure without a page reload');
     return { passed: results.length, results };
   } finally {
     frame.remove();

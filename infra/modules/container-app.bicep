@@ -209,7 +209,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
       ]
       scale: {
         minReplicas: 1
-        maxReplicas: 5
+        maxReplicas: 1
       }
     }
   }
@@ -269,7 +269,7 @@ resource frontendApp 'Microsoft.App/containerApps@2024-03-01' = {
       ]
       scale: {
         minReplicas: 1
-        maxReplicas: 3
+        maxReplicas: 1
       }
     }
   }

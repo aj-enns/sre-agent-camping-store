@@ -6,6 +6,12 @@
 ## Scope
 Azure Container Apps endpoints returning HTTP 500 errors. Logs stored in Log Analytics Workspace.
 
+**Interactive presentation constraint:** Keep the API and frontend at one replica. API carts are in memory;
+the frontend owns the independent monitor and container-local JSON sales ledger. Do not restart, redeploy,
+or scale out the frontend to remediate an API failure. Check the API's actual cart path, not `/health` alone.
+See [presentation instructions](../docs/presentation.md). Generic scale-out examples below are not applicable
+to this single-replica demo without changing its storage design.
+
 ## Valid Azure Monitor Metric Names for Container Apps
 **IMPORTANT: Use ONLY these metric names with `az monitor metrics list`:**
 - `UsageNanoCores` — CPU usage (NOT CpuUsage, NOT CPUUsage)

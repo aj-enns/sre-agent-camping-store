@@ -105,6 +105,9 @@ and `AZURE_LOCATION=eastus2`. Set these variables too if using different values.
 First provision uses Microsoft sample images; the store is ready after website deployment.
 The website workflow builds both images, uses unique commit/run tags, deploys API before frontend,
 waits for ready revisions, and checks endpoints.
+Both apps run one replica for the [shared presentation ledger](presentation.md).
+The frontend now serves the site and proxies API requests; its container-local JSON survives API restarts,
+not frontend redeployments. Deploy outside a presentation session.
 
 Later pushes to `infra/**` deploy infrastructure; pushes to `src/**` deploy the website.
 Both workflows share a lock. A push changing both can queue in either order; use the manual order above for first installation.

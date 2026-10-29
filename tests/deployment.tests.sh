@@ -78,7 +78,8 @@ printf 'curl %s\n' "$*" >> "$CALL_LOG"
 case "$*" in
   */health) printf '{"status":"healthy","service":"camping-api","version":"%s"}' "${HEALTH_VERSION:-v1}" ;;
   */api/products) echo '[{"id":1}]' ;;
-  */config.js) echo 'window.__CONFIG__ = { apiBaseUrl: "https://api.test/api" };' ;;
+  */config.js) echo 'window.__CONFIG__ = { apiBaseUrl: "/api" };' ;;
+  */demo/metrics) echo '{"sessionId":"test-session","orderCount":0}' ;;
   *) echo '<div id="root"></div>' ;;
 esac
 SH
@@ -187,6 +188,7 @@ grep -q 'camping-api:abcdef123456-99-1' "$CALL_LOG"
 grep -q 'camping-frontend:abcdef123456-99-1' "$CALL_LOG"
 grep -q 'AllowedOrigins__0=https://frontend.test' "$CALL_LOG"
 grep -q 'REACT_APP_API_BASE_URL=https://api.test/api' "$CALL_LOG"
+[[ $(grep -c -- '--min-replicas 1 --max-replicas 1' "$CALL_LOG") == 2 ]]
 [[ $(grep -n 'containerapp update' "$CALL_LOG" | head -1) == *'--name api-app '* ]]
 grep -q 'Website deployed' "$GITHUB_STEP_SUMMARY"
 
