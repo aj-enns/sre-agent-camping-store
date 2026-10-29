@@ -160,7 +160,6 @@ export default function App() {
           </nav>
         </header>
 
-        <DemoPanel />
         {error && <div className="error-banner" role="alert">{error}</div>}
         <div className="product-add-status" role="status" aria-live="polite">
           {addedQuantity > 0 && <><span>{addedQuantity} {addedQuantity === 1 ? 'item' : 'items'} added to your cart.</span> <a href="#/cart">View cart &rarr;</a></>}
@@ -178,6 +177,7 @@ export default function App() {
         <span>Trailhead Outfitters</span>
         <span>Sample catalog · Product photography is illustrative</span>
       </footer>
+      <DemoPanel />
     </>
   );
 }

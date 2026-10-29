@@ -17,28 +17,28 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: calc(var(--store-header-height, 76px) + 16px); }
-body { margin: 0; min-width: 320px; background: var(--paper); }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--store-header-height, 76px) + 16px); scroll-padding-bottom: calc(var(--demo-panel-height, 110px) + 16px); }
+body { margin: 0; min-width: 320px; padding-bottom: var(--demo-panel-height, 110px); background: var(--paper); }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .48; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #ff9a69; outline-offset: 3px; }
 
 .store-header { position: sticky; top: 0; z-index: 10; }
-.demo-panel { color: var(--white); background: var(--ink-soft); border-top: 1px solid #435058; font-size: 12px; }
-.demo-summary { display: flex; align-items: center; gap: 28px; padding: 12px clamp(18px, 4vw, 64px) 8px; }
-.demo-session { display: grid; gap: 4px; white-space: nowrap; }
-.demo-session > strong { font-size: 14px; }
+.demo-panel { position: fixed; bottom: 0; left: 0; right: 0; z-index: 9; display: grid; grid-template-columns: minmax(0, 1fr) auto; padding-bottom: env(safe-area-inset-bottom, 0px); color: var(--white); background: var(--ink-soft); border-top: 1px solid #435058; font-size: 12px; }
+.demo-summary { grid-column: 1 / -1; display: flex; align-items: center; gap: 24px; padding: 8px clamp(18px, 4vw, 64px) 4px; }
+.demo-session { display: grid; gap: 2px; white-space: nowrap; }
+.demo-session > strong { font-size: 12px; }
 .demo-health { color: #d4dcdd; font-size: 11px; }
 .demo-health.outage { color: #ffb59d; }
 .demo-totals { flex: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; }
 .demo-totals dt { color: #d4dcdd; font-size: 11px; }
-.demo-totals dd { margin: 4px 0 0; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.demo-caption { padding: 0 clamp(18px, 4vw, 64px) 8px; color: #d4dcdd; font-size: 11px; }
-.demo-history { position: relative; }
-.demo-history summary { padding: 6px clamp(18px, 4vw, 64px) 10px; cursor: pointer; font-size: 11px; }
+.demo-totals dd { margin: 2px 0 0; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.demo-caption { align-self: center; padding: 0 12px 4px clamp(18px, 4vw, 64px); color: #d4dcdd; font-size: 10px; }
+.demo-history { min-width: 0; }
+.demo-history summary { min-height: 28px; display: flex; align-items: center; padding: 4px clamp(18px, 4vw, 64px) 4px 8px; cursor: pointer; font-size: 11px; text-decoration: underline; text-underline-offset: 3px; }
 .demo-history summary:focus-visible { outline: 3px solid #ff9a69; outline-offset: -3px; }
-.demo-history-body { position: fixed; top: var(--store-header-height, 76px); left: 0; right: 0; max-height: min(45vh, calc(100dvh - var(--store-header-height, 76px))); overflow-y: auto; padding: 12px clamp(18px, 4vw, 64px); color: var(--ink); background: var(--white); border-bottom: 1px solid var(--line); box-shadow: 0 8px 16px #121b2130; }
+.demo-history-body { position: absolute; bottom: 100%; left: 0; right: 0; max-height: min(45vh, calc(100dvh - var(--store-header-height, 76px) - var(--demo-panel-height, 110px))); overflow-y: auto; padding: 12px clamp(18px, 4vw, 64px); color: var(--ink); background: var(--white); border-top: 1px solid var(--line); box-shadow: 0 -8px 16px #121b2130; }
 .demo-history-body p { max-width: 90ch; line-height: 1.6; }
 .demo-history-body ul { padding-left: 18px; line-height: 1.8; }
 .demo-history-body select { margin-left: 8px; min-height: 36px; }
@@ -229,6 +229,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .demo-totals dt { font-size: 9px; }
   .demo-totals dd { font-size: 14px; }
   .demo-caption, .demo-history summary { font-size: 10px; }
+  .demo-caption { grid-column: 1 / -1; padding-bottom: 0; }
+  .demo-history { grid-column: 1 / -1; }
+  .demo-history summary { padding-left: 18px; min-height: 32px; }
   .topbar { height: 68px; padding: 0 18px; }
   .brand { gap: 8px; }
   .brand-mark { width: 31px; }

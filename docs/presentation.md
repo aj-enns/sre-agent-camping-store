@@ -1,7 +1,8 @@
 # Interactive presentation
 
 Everyone sees shared sales, order count, average revenue per 10 seconds, and estimated outage loss
-in the sticky panel. Values refresh every 5 seconds. Each browser has its own anonymous cart.
+in the compact panel pinned to the bottom of the screen. History expands upward; navigation and toast
+messages stay at the top. Values refresh every 5 seconds. Each browser has its own anonymous cart.
 Use fictional shipping details; checkout does not take real payment.
 
 ## Deploy once

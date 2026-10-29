@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { money } from './catalog';
 
 type Outage = {
@@ -13,6 +13,19 @@ type Metrics = {
 const duration = (seconds: number) => `${Math.floor(seconds / 60)}m ${Math.floor(seconds % 60)}s`;
 
 export default function DemoPanel() {
+  const panelRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    const measure = () => document.documentElement.style.setProperty('--demo-panel-height', `${panel.getBoundingClientRect().height}px`);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(panel);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty('--demo-panel-height');
+    };
+  }, []);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [error, setError] = useState(false);
   const [comparisonMinutes, setComparisonMinutes] = useState(30);
@@ -50,7 +63,7 @@ export default function DemoPanel() {
   const hypothetical = latest?.rateCentsPerSecond === null || latest?.rateCentsPerSecond === undefined
     ? null : latest.rateCentsPerSecond * comparisonMinutes * 60 / 100;
   return (
-    <section className="demo-panel" aria-label="Shared presentation sales and outage impact">
+    <section className="demo-panel" ref={panelRef} aria-label="Shared presentation sales and outage impact">
       <div className="demo-summary">
         <div className="demo-session"><strong>Live demo</strong><span className={`demo-health ${available ? metrics.status : 'unknown'}`}>{status}</span></div>
         <dl className="demo-totals">
@@ -61,13 +74,13 @@ export default function DemoPanel() {
         </dl>
       </div>
       <div className="demo-caption" role="status">
-        {error ? 'Live totals unavailable. Last received values shown; retrying automatically.' :
+        {error ? 'Totals unavailable. Last received values shown; retrying.' :
           !metrics ? 'Connecting to the shared presentation...' :
           metrics.currentOutage ? `${status}: ${duration(metrics.currentOutage.durationSeconds)}. ${metrics.currentOutage.estimatedLoss === null ? 'Not enough sales data to estimate loss.' : `Current estimated loss ${money(metrics.currentOutage.estimatedLoss)}.`}` :
-          `${status}. Demo revenue, not profit. Totals refresh every 5 seconds.`}
+          `${status} · Demo revenue · Updates every 5s`}
       </div>
       <details className="demo-history">
-        <summary>Outage history &amp; comparison</summary>
+        <summary>History &amp; comparison</summary>
         <div className="demo-history-body">
           <p>Loss is a linear estimate using the frozen pre-outage sales rate. No baseline means no estimate. It is not measured lost orders or proof of SRE Agent savings.</p>
           {!metrics?.recentOutages.length ? <p>No outages recorded for this presentation.</p> :
