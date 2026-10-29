@@ -81,6 +81,25 @@ export async function runProductPageTests() {
     frame.contentWindow.location.hash = hash;
     await waitFor(condition, hash);
   };
+  const checkPinnedMessage = async (selector, label) => {
+    for (const width of [1280, 390, 320]) {
+      frame.style.width = `${width}px`;
+      frame.style.height = '600px';
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      frame.contentWindow.scrollTo({ top: doc().documentElement.scrollHeight, behavior: 'instant' });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      const header = find('.topbar').getBoundingClientRect();
+      const message = find(selector).getBoundingClientRect();
+      assert(frame.contentWindow.scrollY > 0 && Math.abs(header.top) < 1, `${label}: navigation stays at the viewport top at ${width}px`);
+      assert(message.top >= header.bottom - 1 && message.bottom <= 600 && message.height > 0, `${label}: message stays visible below navigation at ${width}px`);
+      assert(find('.store-header').contains(doc().elementFromPoint(message.left + 10, message.top + 10)), `${label}: message is above scrolling content at ${width}px`);
+      assert(doc().documentElement.scrollWidth <= width, `${label}: no horizontal overflow at ${width}px`);
+      assert(Number.parseFloat(frame.contentWindow.getComputedStyle(doc().documentElement).scrollPaddingTop) >= find('.store-header').getBoundingClientRect().height, `${label}: anchor clearance includes the message at ${width}px`);
+    }
+    frame.style.width = '1280px';
+    frame.style.height = '900px';
+    frame.contentWindow.scrollTo({ top: 0, behavior: 'instant' });
+  };
 
   try {
     await waitFor(() => find('.product-card-link'), 'catalog');
@@ -125,6 +144,7 @@ export async function runProductPageTests() {
     state.releaseAdd();
     await waitFor(() => find('.product-add-status').textContent.includes('2 items added') && find('.cart-count').textContent === '2', 'cart success');
     assert(state.cart.items[0].quantity === 2, 'Selected quantity reaches the API and updates the cart count');
+    await checkPinnedMessage('.product-add-status', 'Product success');
     click('.product-add-status a');
     await waitFor(() => find('.cart-item'), 'cart page');
     assert(find('.quantity-control span').textContent === '2', 'View cart displays the selected item quantity');
@@ -144,8 +164,11 @@ export async function runProductPageTests() {
     click('.product-card .add-button');
     await waitFor(() => find('.cart-count').textContent === '3', 'catalog quick-add');
     assert(state.cart.items[0].quantity === 3, 'Catalog quick-add still adds one item');
+    assert(find('.product-add-status').textContent.includes('1 item added'), 'Catalog quick-add uses the shared success message');
+    await checkPinnedMessage('.product-add-status', 'Catalog success');
     click('.top-nav a[href="#/orders"]');
     await waitFor(() => find('.orders-page .empty-state'), 'order history');
+    assert(find('.product-add-status').textContent === '', 'Navigation clears stale success messages');
     assert(find('.orders-page .empty-state').textContent.includes('No orders yet'), 'Order history remains accessible from the shared navigation');
     await go('#/products/1', () => find('#product-title'));
     click('.product-breadcrumbs a:nth-of-type(2)');
@@ -170,6 +193,7 @@ export async function runProductPageTests() {
     click('.product-add-button');
     await waitFor(() => find('.error-banner'), 'cart error');
     assert(!find('.product-add-status').textContent.includes('added') && !find('.product-add-button').disabled, 'Failed cart requests show an error, never a success message, and allow retry');
+    await checkPinnedMessage('.error-banner', 'Cart error');
     state.failAdd = false;
     const previousWindow = frame.contentWindow.__productPageTest;
     frame.contentWindow.location.reload();

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useApi } from './api';
 import { money, productArt } from './catalog';
 import ProductPage from './ProductPage';
@@ -56,10 +56,28 @@ export default function App() {
   const [filters, setFilters] = useState<Filters>({ category: '', query: '' });
   const [cart, setCart] = useState<Cart | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [addedQuantity, setAddedQuantity] = useState(0);
+  const headerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const updateHeight = () => {
+      document.documentElement.style.setProperty('--store-header-height', `${header.getBoundingClientRect().height}px`);
+    };
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty('--store-header-height');
+    };
+  }, []);
 
   const run = useCallback(async <T,>(action: () => Promise<T>): Promise<T | undefined> => {
     try {
       setError(null);
+      setAddedQuantity(0);
       return await action();
     } catch (e) {
       setError((e as Error).message);
@@ -80,6 +98,7 @@ export default function App() {
     const navigate = () => {
       setRoute(readRoute());
       setError(null);
+      setAddedQuantity(0);
       requestAnimationFrame(() => {
         const catalog = window.location.hash === '#catalog' ? document.getElementById('catalog') : null;
         const target = catalog ?? document.querySelector<HTMLElement>('main');
@@ -101,6 +120,7 @@ export default function App() {
     const nextCart = await run(() => api.addToCart(USER_ID, productId, quantity));
     if (!nextCart) return false;
     setCart(nextCart);
+    setAddedQuantity(quantity);
     return true;
   };
 
@@ -108,21 +128,26 @@ export default function App() {
 
   return (
     <>
-      <header className="topbar">
-        <a className="brand" href="#/" aria-label="Trailhead Outfitters home">
-          <span className="brand-mark"><BrandMark /></span>
-          <span className="brand-name">Trailhead <span>Outfitters</span></span>
-        </a>
-        <nav className="top-nav" aria-label="Main navigation">
-          <a className={view === 'shop' || view === 'product' ? 'nav-link active' : 'nav-link'} href="#/" aria-current={view === 'shop' ? 'page' : undefined}>Gear</a>
-          <a className={view === 'cart' ? 'nav-link active' : 'nav-link'} href="#/cart" aria-current={view === 'cart' ? 'page' : undefined}>
-            <BagIcon /> Cart <span className="cart-count">{cartCount}</span>
+      <div className="store-header" ref={headerRef}>
+        <header className="topbar">
+          <a className="brand" href="#/" aria-label="Trailhead Outfitters home">
+            <span className="brand-mark"><BrandMark /></span>
+            <span className="brand-name">Trailhead <span>Outfitters</span></span>
           </a>
-          <a className={view === 'orders' ? 'nav-link active' : 'nav-link'} href="#/orders" aria-current={view === 'orders' ? 'page' : undefined}>Orders</a>
-        </nav>
-      </header>
+          <nav className="top-nav" aria-label="Main navigation">
+            <a className={view === 'shop' || view === 'product' ? 'nav-link active' : 'nav-link'} href="#/" aria-current={view === 'shop' ? 'page' : undefined}>Gear</a>
+            <a className={view === 'cart' ? 'nav-link active' : 'nav-link'} href="#/cart" aria-current={view === 'cart' ? 'page' : undefined}>
+              <BagIcon /> Cart <span className="cart-count">{cartCount}</span>
+            </a>
+            <a className={view === 'orders' ? 'nav-link active' : 'nav-link'} href="#/orders" aria-current={view === 'orders' ? 'page' : undefined}>Orders</a>
+          </nav>
+        </header>
 
-      {error && <div className="error-banner" role="alert">{error}</div>}
+        {error && <div className="error-banner" role="alert">{error}</div>}
+        <div className="product-add-status" role="status" aria-live="polite">
+          {addedQuantity > 0 && <><span>{addedQuantity} {addedQuantity === 1 ? 'item' : 'items'} added to your cart.</span> <a href="#/cart">View cart &rarr;</a></>}
+        </div>
+      </div>
 
       <main className={`page page-${view}`} tabIndex={-1}>
         {view === 'shop' && <Shop run={run} onAdd={addToCart} filters={filters} onFiltersChange={setFilters} />}

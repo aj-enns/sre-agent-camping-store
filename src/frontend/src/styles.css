@@ -17,13 +17,14 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--store-header-height, 76px) + 16px); }
 body { margin: 0; min-width: 320px; background: var(--paper); }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .48; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #ff9a69; outline-offset: 3px; }
 
+.store-header { position: sticky; top: 0; z-index: 10; }
 .topbar {
   height: 76px;
   display: flex;
@@ -143,7 +144,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .primary-button.product-add-button { width: 100%; min-height: 52px; margin-top: 18px; padding: 0 20px; color: var(--ink); font-size: 12px; }
 .primary-button.product-add-button:hover:not(:disabled) { color: var(--white); background: var(--ink); }
 .product-add-button > span { font-size: 24px; font-weight: 400; }
-.product-add-status { min-height: 42px; padding-top: 10px; color: #29553c; font-size: 12px; line-height: 1.6; }
+.product-add-status { color: #29553c; background: var(--white); font-size: 12px; line-height: 1.6; }
+.product-add-status:not(:empty) { padding: 12px clamp(20px, 4vw, 64px); border-bottom: 1px solid var(--line); }
+.product-add-status, .error-banner { max-height: 30vh; overflow-y: auto; overflow-wrap: anywhere; }
 .product-add-status a { display: inline-block; margin-left: 5px; color: var(--ink); font-weight: 600; text-underline-offset: 3px; }
 .product-facts { margin: 16px 0 0; border-top: 1px solid var(--line); }
 .product-facts > div { display: flex; justify-content: space-between; gap: 16px; padding: 13px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
