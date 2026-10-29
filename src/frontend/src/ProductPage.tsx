@@ -17,7 +17,6 @@ export default function ProductPage({ productId, onAdd, onCategorySelect }: {
   const [attempt, setAttempt] = useState(0);
   const [quantity, setQuantity] = useState('1');
   const [adding, setAdding] = useState(false);
-  const [addedQuantity, setAddedQuantity] = useState(0);
   const [addFailed, setAddFailed] = useState(false);
 
   useEffect(() => {
@@ -81,11 +80,9 @@ export default function ProductPage({ productId, onAdd, onCategorySelect }: {
     event.preventDefault();
     if (!validQuantity || !inStock || adding) return;
     setAdding(true);
-    setAddedQuantity(0);
     setAddFailed(false);
     const success = await onAdd(product.id, amount);
-    if (success) setAddedQuantity(amount);
-    else setAddFailed(true);
+    if (!success) setAddFailed(true);
     setAdding(false);
   };
 
@@ -134,9 +131,6 @@ export default function ProductPage({ productId, onAdd, onCategorySelect }: {
             <button className="primary-button product-add-button" type="submit" disabled={!inStock || !validQuantity || adding}>
               {adding ? 'Adding to cart...' : inStock ? 'Add to cart' : 'Out of stock'} <span aria-hidden="true">+</span>
             </button>
-            <div className="product-add-status" role="status" aria-live="polite">
-              {addedQuantity > 0 && <><span>{addedQuantity} {addedQuantity === 1 ? 'item' : 'items'} added to your cart.</span> <a href="#/cart">View cart &rarr;</a></>}
-            </div>
             {addFailed && <p className="quantity-error" role="alert">This item could not be added. Please try again.</p>}
           </form>
 
