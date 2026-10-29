@@ -169,6 +169,7 @@ This recreates the report definition, not deleted telemetry, past incidents, or 
 | Docker Linux engine pipe not found | Start Docker Desktop and wait for `docker info` to succeed |
 | Hook cannot find `C:/.../azd-preprovision-*.sh` | Use native PowerShell on Windows; the Windows hook needs PowerShell 7 and Git for Windows |
 | OIDC sign-in denied | Federated subject matches your repository and environment `lab` |
+| Frontend logs show `listen EACCES` on port 80 | The non-root Node frontend requires port 8080. Use the updated infrastructure and frontend image; run `azd up` to apply both. |
 | Registry push/pull denied | Deployer has `AcrPush` or Owner; app identity has `AcrPull`; allow role propagation |
 | Subscription deployment denied | Infrastructure identity has Contributor and RBAC Administrator at subscription scope |
 | Agent unavailable | Register `Microsoft.App`; confirm subscription access to SRE Agent in `eastus2` |

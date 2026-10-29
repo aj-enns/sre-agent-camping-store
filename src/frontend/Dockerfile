@@ -14,5 +14,5 @@ COPY server ./server
 RUN mkdir /app/data && chown node:node /app/data
 USER node
 
-EXPOSE 80
+EXPOSE 8080
 CMD ["node", "server/index.mjs"]

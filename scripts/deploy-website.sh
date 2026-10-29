@@ -55,6 +55,9 @@ api_revision=$(az_tsv containerapp update --resource-group "$AZURE_RESOURCE_GROU
   --query properties.latestRevisionName)
 wait_ready "$API_APP" "$api_revision"
 
+az containerapp ingress update --resource-group "$AZURE_RESOURCE_GROUP" \
+  --name "$FRONTEND_APP" --target-port 8080 --output none
+
 frontend_revision=$(az_tsv containerapp update --resource-group "$AZURE_RESOURCE_GROUP" \
   --name "$FRONTEND_APP" --image "$frontend_image" \
   --min-replicas 1 --max-replicas 1 \

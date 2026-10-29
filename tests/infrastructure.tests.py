@@ -36,6 +36,7 @@ for app in apps:
     assert app["properties"]["template"]["scale"]["maxReplicas"] == 1, "The in-memory API carts and frontend JSON ledger require one replica"
     assert app["identity"]["type"] == "UserAssigned", "Apps must use managed identity"
     configuration = app["properties"]["configuration"]
+    assert configuration["ingress"]["targetPort"] == 8080, "Both non-root app runtimes listen on port 8080"
     assert configuration["activeRevisionsMode"] == "Single", "Traffic must switch to the new revision"
     for registry_entry in configuration["registries"]:
         assert "identity" in registry_entry, "Use managed identity for image pulls"
