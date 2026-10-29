@@ -54,6 +54,8 @@ case "$1 $2" in
     esac ;;
   'containerapp update')
     if [[ "$*" == *'--name api-app '* ]]; then echo api-revision; else echo frontend-revision; fi ;;
+  'containerapp ingress')
+    [[ "$*" == *'--name frontend-app --target-port 8080'* ]] ;;
   'acr show')
     if [[ "$*" == *publicNetworkAccess* ]]; then
       printf '%s\r\n' "${REGISTRY_ACCESS:-Enabled}"
@@ -187,6 +189,7 @@ grep -q -- '--build-arg NUGET_SOURCE=https://api.nuget.org/v3/index.json' "$CALL
 grep -q 'camping-api:abcdef123456-99-1' "$CALL_LOG"
 grep -q 'camping-frontend:abcdef123456-99-1' "$CALL_LOG"
 grep -q 'AllowedOrigins__0=https://frontend.test' "$CALL_LOG"
+grep -q 'containerapp ingress update.*--name frontend-app --target-port 8080' "$CALL_LOG"
 grep -q 'REACT_APP_API_BASE_URL=https://api.test/api' "$CALL_LOG"
 [[ $(grep -c -- '--min-replicas 1 --max-replicas 1' "$CALL_LOG") == 2 ]]
 [[ $(grep -n 'containerapp update' "$CALL_LOG" | head -1) == *'--name api-app '* ]]

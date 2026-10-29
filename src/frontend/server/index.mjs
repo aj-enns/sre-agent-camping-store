@@ -152,7 +152,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     root: resolve(process.env.STATIC_ROOT ?? 'build'),
   });
   const control = createControlServer(store, probe);
-  server.listen(Number(process.env.PORT ?? 80), '0.0.0.0');
+  server.listen(Number(process.env.PORT ?? 8080), '0.0.0.0');
   control.listen(8081, '127.0.0.1');
   const interval = setInterval(probe, 5000);
   await probe();
