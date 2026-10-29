@@ -32,6 +32,8 @@ apps = [item for item in resources if item["type"] == "Microsoft.App/containerAp
 assert len(apps) == 2, "Deploy the API and frontend"
 assert {app["tags"]["azd-service-name"] for app in apps} == {"api", "frontend"}
 for app in apps:
+    assert app["properties"]["template"]["scale"]["minReplicas"] == 1
+    assert app["properties"]["template"]["scale"]["maxReplicas"] == 1, "The in-memory API carts and frontend JSON ledger require one replica"
     assert app["identity"]["type"] == "UserAssigned", "Apps must use managed identity"
     configuration = app["properties"]["configuration"]
     assert configuration["activeRevisionsMode"] == "Single", "Traffic must switch to the new revision"

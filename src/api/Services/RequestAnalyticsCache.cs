@@ -31,6 +31,9 @@ public class RequestAnalyticsCache : IRequestAnalyticsCache
         // TODO: add cache eviction
         var buffer = new byte[_entryBytes];
         Array.Fill(buffer, (byte)1); // touch the pages so the memory is actually committed
+        // Exercise the same allocation under memory pressure without retaining probe buffers.
+        // Attendee carts and break-app's demo-user still retain every allocation.
+        if (userId == "presentation-probe") return;
         int count;
         lock (_gate)
         {

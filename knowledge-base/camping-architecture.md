@@ -11,7 +11,7 @@ Trailhead Outfitters is a camping supply retail web store (tents, sleeping bags,
 | Component | Azure Service | Details |
 |-----------|---------------|---------|
 | **API** | Azure Container Apps (`ca-camping-*`) | ASP.NET Core (.NET 9), external ingress |
-| **Frontend** | Azure Container Apps (`ca-camping-fe-*`) | React + nginx, calls the API |
+| **Frontend** | Azure Container Apps (`ca-camping-fe-*`) | React + Node.js server; proxies the API and keeps shared presentation metrics in container-local JSON |
 | **Container Registry** | Azure Container Registry (Basic) | Public endpoint; images require authentication; admin and anonymous access disabled |
 | **Container Environment** | Container Apps Environment | No custom VNet; diagnostic settings route logs to Log Analytics |
 | **Logs** | Log Analytics Workspace | Console logs via `ContainerAppConsoleLogs`; no shared workspace keys |
@@ -51,6 +51,10 @@ Each `POST /api/cart/{userId}/items` call causes `RequestAnalyticsCache` (a sing
 - OOM kill, container restart, HTTP 5xx errors
 - Azure Monitor alert `alert-http-5xx-sre-lab` fires
 
+Audience `shopper-*` carts contribute to this leak, just like the break script's `demo-user`.
+The reserved `presentation-probe` cart alone releases its allocation instead of retaining it, so the
+frontend's five-second monitor exercises the same allocation/cart path without accumulating its own leak.
+
 **Trigger:** `bash scripts/break-app.sh https://<app-url>`, or:
 ```bash
 while true; do
@@ -83,7 +87,8 @@ Building the API with `API_VERSION=v2` makes `PaymentGateway` fail, so `POST /ap
 | `src/api/Services/PaymentGateway.cs` | Source of the v2 payment failure |
 | `src/api/Services/OrderService.cs`, `CartService.cs` | Business logic |
 | `src/api/Dockerfile` | API image (`API_VERSION` build arg) |
-| `src/frontend/` | React storefront and nginx config |
+| `src/frontend/` | React storefront and Node.js server |
+| `src/frontend/server/` | JSON receipt ledger, shared metrics, independent cart monitor, loopback-only reset |
 
 ---
 ## Scaling Configuration
@@ -91,10 +96,15 @@ Building the API with `API_VERSION=v2` makes `PaymentGateway` fail, so `POST /ap
 | Setting | Value |
 |---------|-------|
 | Min replicas | 1 |
-| Max replicas | 5 |
+| Max replicas | 1 (API and frontend) |
 | CPU | 0.5 cores |
 | Memory | 1 Gi |
-| Scale rule | HTTP concurrent requests > 50 |
+
+Keep the frontend at one replica and do not restart/redeploy it during a presentation.
+Its `/app/data/presentation.json` ledger survives an API restart but not frontend container replacement.
+API carts remain in memory. Scaling out splits carts and presentation ledgers rather than sharing them.
+Public `/demo/metrics` is served by the frontend, not the API; it records sampled cart outages independently.
+See [presentation instructions](../docs/presentation.md) for formulas, reset, and limitations.
 
 ---
 
@@ -148,4 +158,4 @@ These alerts flow automatically to the SRE Agent via the managed resource group 
 2. **Check logs:** Query `ContainerAppConsoleLogs` in Log Analytics
 3. **Check metrics:** Azure Monitor → Container App → Requests, CPU, Memory
 4. **Restart:** `az containerapp revision restart -g <rg> -n <app> --revision <rev>`
-5. **Scale out:** `az containerapp update -g <rg> -n <app> --min-replicas 3`
+5. **Preserve demo state:** Keep both apps at one replica; do not restart the frontend to fix an API incident.

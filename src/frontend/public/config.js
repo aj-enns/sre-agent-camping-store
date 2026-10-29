@@ -1,2 +1,2 @@
-// Overwritten at container start from REACT_APP_API_BASE_URL (see Dockerfile). Local default below.
-window.__CONFIG__ = { apiBaseUrl: 'http://localhost:5000/api' };
+// The frontend server proxies requests to REACT_APP_API_BASE_URL.
+window.__CONFIG__ = { apiBaseUrl: '/api' };

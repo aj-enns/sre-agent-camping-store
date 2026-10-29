@@ -17,7 +17,7 @@ public class ApiTests
         public void Record(string userId) => EntryCount++;
     }
 
-    private static WebApplicationFactory<Program> CreateFactory(string apiVersion = "v1", CountingAnalytics? analytics = null) =>
+    private static WebApplicationFactory<Program> CreateFactory(string apiVersion = "v1", IRequestAnalyticsCache? analytics = null) =>
         new WebApplicationFactory<Program>().WithWebHostBuilder(b =>
         {
             b.UseSetting("API_VERSION", apiVersion);
@@ -57,6 +57,51 @@ public class ApiTests
         var response = await client.PostAsJsonAsync("/api/cart/u1/items", new AddCartItemRequest(1, 2));
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(1, analytics.EntryCount);
+    }
+
+    [Theory]
+    [InlineData("demo-user")]
+    [InlineData("shopper-audience-1")]
+    public async Task Break_script_and_audience_cart_adds_keep_growing_analytics(string userId)
+    {
+        var analytics = new CountingAnalytics();
+        using var client = CreateFactory(analytics: analytics).CreateClient();
+        for (var i = 0; i < 3; i++)
+        {
+            var response = await client.PostAsJsonAsync($"/api/cart/{userId}/items", new AddCartItemRequest(1, 1));
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+        Assert.Equal(3, analytics.EntryCount);
+    }
+
+    [Fact]
+    public async Task Monitor_cart_checks_functionality_without_growing_analytics()
+    {
+        var analytics = new RequestAnalyticsCache(
+            Microsoft.Extensions.Options.Options.Create(new CampingApiOptions { AnalyticsEntryMegabytes = 1 }),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<RequestAnalyticsCache>.Instance);
+        using var client = CreateFactory(analytics: analytics).CreateClient();
+        var response = await client.PostAsJsonAsync("/api/cart/presentation-probe/items", new AddCartItemRequest(1, 1));
+        var cart = await response.Content.ReadFromJsonAsync<Cart>();
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Single(cart!.Items);
+        Assert.Equal(0, analytics.EntryCount);
+        Assert.Equal(HttpStatusCode.OK, (await client.DeleteAsync("/api/cart/presentation-probe")).StatusCode);
+    }
+
+    [Theory]
+    [InlineData("demo-user")]
+    [InlineData("shopper-audience-2")]
+    public void Actual_cache_retains_attendee_and_break_script_buffers(string userId)
+    {
+        var analytics = new RequestAnalyticsCache(
+            Microsoft.Extensions.Options.Options.Create(new CampingApiOptions { AnalyticsEntryMegabytes = 1 }),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<RequestAnalyticsCache>.Instance);
+        analytics.Record(userId);
+        analytics.Record(userId);
+        Assert.Equal(2, analytics.EntryCount);
+        analytics.Record("presentation-probe");
+        Assert.Equal(2, analytics.EntryCount);
     }
 
     [Fact]

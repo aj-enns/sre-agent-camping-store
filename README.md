@@ -76,6 +76,9 @@ Follow **[Deployment](docs/deployment.md)**: use `azd up` locally, or run
 **Deploy infrastructure**, then **Deploy website** in GitHub Actions.
 Images require authentication; no storage account, shared keys, or private network is needed.
 
+For an audience shopping session with shared live sales and outage-loss estimates, see
+**[Interactive presentation](docs/presentation.md)**. Reset the totals from your terminal, not the public website.
+
 ## Verify Setup
 
 Open [sre.azure.com](https://sre.azure.com) → Full Setup → verify:

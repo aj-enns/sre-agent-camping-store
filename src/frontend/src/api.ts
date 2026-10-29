@@ -8,6 +8,7 @@ export class ApiError extends Error {
 }
 
 export class ApiClient {
+  private checkoutKey: string | null = null;
   constructor(private readonly baseUrl: string) {}
 
   private async request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -65,11 +66,25 @@ export class ApiClient {
     return this.request<Cart>(`/cart/${userId}/items/${itemId}`, { method: 'DELETE' });
   }
 
-  placeOrder(userId: string, shippingAddress: string, paymentMethod: string) {
-    return this.request<Order>('/orders', {
-      method: 'POST',
-      body: JSON.stringify({ userId, shippingAddress, paymentMethod }),
-    });
+  async placeOrder(userId: string, shippingAddress: string, paymentMethod: string) {
+    const storageKey = `trailhead-checkout-${userId}`;
+    this.checkoutKey ??= sessionStorage.getItem(storageKey) ?? crypto.randomUUID();
+    sessionStorage.setItem(storageKey, this.checkoutKey);
+    try {
+      const order = await this.request<Order>('/orders', {
+        method: 'POST', headers: { 'Idempotency-Key': this.checkoutKey },
+        body: JSON.stringify({ userId, shippingAddress, paymentMethod }),
+      });
+      this.checkoutKey = null;
+      sessionStorage.removeItem(storageKey);
+      return order;
+    } catch (error) {
+      if (error instanceof ApiError && error.status !== 409 && error.status !== 502 && error.status < 500) {
+        this.checkoutKey = null;
+        sessionStorage.removeItem(storageKey);
+      }
+      throw error;
+    }
   }
 
   getOrders(userId: string) {
@@ -78,7 +93,7 @@ export class ApiClient {
 }
 
 export const defaultApiClient = () =>
-  new ApiClient(window.__CONFIG__?.apiBaseUrl ?? 'http://localhost:5000/api');
+  new ApiClient(window.__CONFIG__?.apiBaseUrl ?? '/api');
 
 // The client is provided via context so components can be tested with a fake.
 export const ApiContext = createContext<ApiClient>(defaultApiClient());

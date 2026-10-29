@@ -50,12 +50,14 @@ wait_ready() {
 
 api_revision=$(az_tsv containerapp update --resource-group "$AZURE_RESOURCE_GROUP" \
   --name "$API_APP" --image "$api_image" \
+  --min-replicas 1 --max-replicas 1 \
   --set-env-vars "AllowedOrigins__0=$frontend_url" API_VERSION=v1 \
   --query properties.latestRevisionName)
 wait_ready "$API_APP" "$api_revision"
 
 frontend_revision=$(az_tsv containerapp update --resource-group "$AZURE_RESOURCE_GROUP" \
   --name "$FRONTEND_APP" --image "$frontend_image" \
+  --min-replicas 1 --max-replicas 1 \
   --set-env-vars "REACT_APP_API_BASE_URL=$api_url/api" \
   --query properties.latestRevisionName)
 wait_ready "$FRONTEND_APP" "$frontend_revision"
@@ -65,7 +67,8 @@ curl "${curl_options[@]}" "$api_url/health" | jq -e \
   '.status == "healthy" and .service == "camping-api" and .version == "v1"' > /dev/null
 curl "${curl_options[@]}" "$api_url/api/products" | jq -e 'type == "array" and length > 0' > /dev/null
 curl "${curl_options[@]}" "$frontend_url/" | grep -q '<div id="root">'
-curl "${curl_options[@]}" "$frontend_url/config.js" | grep -Fq "$api_url/api"
+curl "${curl_options[@]}" "$frontend_url/config.js" | grep -Fq 'apiBaseUrl: "/api"'
+curl "${curl_options[@]}" "$frontend_url/demo/metrics" | jq -e '.sessionId and (.orderCount | type == "number")' > /dev/null
 {
   printf '## Website deployed\n\nWebsite: %s\n\nAPI: %s\n\nImage tag: `%s`\n' "$frontend_url" "$api_url" "$tag"
 } | tee -a "${GITHUB_STEP_SUMMARY:-/dev/null}"
