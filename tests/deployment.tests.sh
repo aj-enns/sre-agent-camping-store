@@ -31,6 +31,11 @@ case "$1 $2" in
   'deployment sub') [[ "${DEPLOY_FAIL:-false}" != true ]] ;;
   'containerapp list')
     if [[ "${APP_LIST_FAIL:-false}" == true ]]; then exit 1; fi
+    if [[ "$*" == *'--output json'* ]]; then
+      if [[ "${AMBIGUOUS_APPS:-false}" == true ]]; then echo '[]'; exit 0; fi
+      echo '[{"name":"api-app","tags":{"azd-service-name":"api"}},{"name":"frontend-app","tags":{"azd-service-name":"frontend"}}]'
+      exit 0
+    fi
     printf '%s\r\n' "${APP_COUNT-2}" ;;
   'containerapp show')
     if [[ "${SHOW_FAIL:-false}" == true ]]; then exit 1; fi
@@ -152,9 +157,17 @@ for scenario in APP_LIST_FAIL APP_COUNT; do
 done
 
 export MISSING_OUTPUTS=true
-if run azd-preprovision.sh; then echo 'FAIL: missing outputs with existing apps accepted'; exit 1; fi
+run deploy-infra.sh
+grep -q 'apiImage=privateacr.azurecr.io/camping:previous-sha' "$CALL_LOG"
+grep -q 'frontendImage=privateacr.azurecr.io/camping:previous-sha' "$CALL_LOG"
+run azd-preprovision.sh
+grep -q 'azd env set API_IMAGE privateacr.azurecr.io/camping:previous-sha' "$CALL_LOG"
+export AMBIGUOUS_APPS=true
+if run azd-preprovision.sh; then echo 'FAIL: missing tagged apps accepted'; exit 1; fi
 ! grep -q 'azd env set' "$CALL_LOG"
-unset MISSING_OUTPUTS
+if run deploy-infra.sh; then echo 'FAIL: missing tagged apps allowed deployment'; exit 1; fi
+! grep -q 'deployment sub create' "$CALL_LOG"
+unset MISSING_OUTPUTS AMBIGUOUS_APPS
 
 run deploy-infra.sh
 grep -q 'apiImage=privateacr.azurecr.io/camping:previous-sha' "$CALL_LOG"

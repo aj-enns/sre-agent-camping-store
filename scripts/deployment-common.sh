@@ -34,7 +34,7 @@ load_current_images() {
   API_IMAGE='mcr.microsoft.com/dotnet/samples:aspnetapp'
   FRONTEND_IMAGE='mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
   FRONTEND_ORIGIN=''
-  local deployment_names apps frontend_fqdn group_exists
+  local deployment_names apps frontend_fqdn group_exists outputs tagged_apps
   group_exists=$(az_tsv group exists --name "$AZURE_RESOURCE_GROUP")
   if [[ "$group_exists" == false ]]; then
     return 0
@@ -55,7 +55,17 @@ load_current_images() {
   deployment_names=$(az_tsv deployment group list --resource-group "$AZURE_RESOURCE_GROUP" \
     --query '[].name')
   if grep -Fxq resources-deployment <<< "$deployment_names"; then
-    load_apps
+    outputs=$(az deployment group show --resource-group "$AZURE_RESOURCE_GROUP" \
+      --name resources-deployment --query properties.outputs --output json)
+    if [[ "$outputs" == null ]]; then
+      echo "Deployment outputs are unavailable; discovering existing apps by azd service tags." >&2
+      tagged_apps=$(az containerapp list --resource-group "$AZURE_RESOURCE_GROUP" --output json)
+      API_APP=$(jq -er '[.[] | select(.tags["azd-service-name"] == "api")] | if length == 1 then .[0].name else error("Expected exactly one API app") end' <<< "$tagged_apps")
+      FRONTEND_APP=$(jq -er '[.[] | select(.tags["azd-service-name"] == "frontend")] | if length == 1 then .[0].name else error("Expected exactly one frontend app") end' <<< "$tagged_apps")
+    else
+      API_APP=$(jq -er '.containerAppName.value | select(length > 0)' <<< "$outputs")
+      FRONTEND_APP=$(jq -er '.frontendAppName.value | select(length > 0)' <<< "$outputs")
+    fi
     API_IMAGE=$(az_tsv containerapp show --resource-group "$AZURE_RESOURCE_GROUP" \
       --name "$API_APP" --query 'properties.template.containers[0].image')
     FRONTEND_IMAGE=$(az_tsv containerapp show --resource-group "$AZURE_RESOURCE_GROUP" \

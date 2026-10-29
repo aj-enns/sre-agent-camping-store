@@ -172,6 +172,7 @@ This recreates the report definition, not deleted telemetry, past incidents, or 
 | Frontend logs show `listen EACCES` on port 80 | The non-root Node frontend requires port 8080. Use the updated infrastructure and frontend image; run `azd up` to apply both. |
 | Registry push/pull denied | Deployer has `AcrPush` or Owner; app identity has `AcrPull`; allow role propagation |
 | Subscription deployment denied | Infrastructure identity has Contributor and RBAC Administrator at subscription scope |
+| Retry after a failed deployment | Empty deployment outputs are recovered using unique `azd-service-name` app tags; existing images are preserved. Missing or ambiguous tags stop deployment. |
 | Agent unavailable | Register `Microsoft.App`; confirm subscription access to SRE Agent in `eastus2` |
 | API Docker restore fails with TLS errors | Set `NUGET_SOURCE` to your approved proxy feed; do not disable certificate checks |
 | `ManagedEnvironmentProvisioningError` while initializing `ManagedCluster` | Check the environment's deployment errors, Activity Log, and regional quota. Retry if Azure reports a transient failure; only recreate a failed environment after checking its workloads. Keep the rest of the resource group. |
