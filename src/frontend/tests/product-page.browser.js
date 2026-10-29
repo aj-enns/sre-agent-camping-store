@@ -102,10 +102,14 @@ export async function runProductPageTests() {
       assert(message.top >= header.bottom - 1 && message.bottom <= 600 && message.height > 0, `${label}: message stays visible below navigation at ${width}px`);
       assert(find('.store-header').contains(doc().elementFromPoint(message.left + 10, message.top + 10)), `${label}: message is above scrolling content at ${width}px`);
       assert(doc().documentElement.scrollWidth <= width, `${label}: no horizontal overflow at ${width}px`);
+      const panel = find('.demo-panel').getBoundingClientRect();
+      assert(Math.abs(panel.bottom - doc().documentElement.clientHeight) < 1 && panel.height <= 120, `${label}: compact metrics stay at the bottom at ${width}px`);
+      assert(Number.parseFloat(frame.contentWindow.getComputedStyle(doc().body).paddingBottom) >= panel.height, `${label}: page reserves room for bottom metrics at ${width}px`);
       assert(Number.parseFloat(frame.contentWindow.getComputedStyle(doc().documentElement).scrollPaddingTop) >= find('.store-header').getBoundingClientRect().height, `${label}: anchor clearance includes the message at ${width}px`);
       find('.demo-history').open = true;
       await new Promise((resolve) => setTimeout(resolve, 25));
       assert(find('.demo-history-body').getBoundingClientRect().top >= message.bottom - 1, `${label}: expanded history does not cover the toast at ${width}px`);
+      assert(find('.demo-history-body').getBoundingClientRect().bottom <= panel.top + 1, `${label}: history opens above the bottom bar at ${width}px`);
       find('.demo-history').open = false;
     }
     frame.style.width = '1280px';
